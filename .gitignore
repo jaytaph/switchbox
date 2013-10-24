@@ -1,0 +1,12 @@
+# My IDEA project settings
+.idea
+
+# vendor dependencies
+vendor/
+
+# Composer lock file
+composer.lock
+
+# PEM certificates and test applications
+*.pem
+*.der

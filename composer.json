@@ -1,0 +1,23 @@
+{
+    "name": "jaytaph/SwitchBox",
+    "description" : "",
+    "keywords" : [ "PHP", "TeleHash" ],
+    "homepage" : "https://github.com/jaytaph/SwitchBox",
+    "license" : "3-Clause BSD",
+    "require" : {
+        "php" : ">=5.3.3",
+        "xqus/phpecc" : "dev-master",
+        "phpseclib/phpseclib": "0.3.*@dev"
+    },
+    "authors" : [
+        {
+            "name" : "Joshua Thijssen",
+            "role" : "Developer"
+        }
+    ],
+    "autoload" : {
+        "psr-0" : {
+            "SwitchBox" : "lib/"
+        }
+    }
+}
