@@ -60,6 +60,8 @@ class Open implements iProcessor {
             throw new \InvalidArgumentException("open missing attached key");
         }
 
+        $hash = hash('sha256', $innerPacket->getBody(), true);
+
         $key = $innerPacket->getBody();
         $res = openssl_pkey_get_public(Utils::convertDerToPem($key));
         $details = openssl_pkey_get_details($res);
@@ -139,6 +141,7 @@ class Open implements iProcessor {
         $key = hash_final($ctx, true);
         $from->setDecryptionKey($key);
     }
+
 
     static function generate(SwitchBox $switchbox, Seed $seed, $family = null) {
         // 0. Setup some stuff
