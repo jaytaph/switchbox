@@ -7,6 +7,5 @@ vendor/
 # Composer lock file
 composer.lock
 
-# PEM certificates and test applications
-*.pem
-*.der
+# Initial seed.json
+seed.json

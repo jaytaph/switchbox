@@ -239,4 +239,9 @@ class Node {
         return $this->bucket_idx;
     }
 
+
+    function __toString() {
+        return $this->getIp().":".$this->getPort()."[".$this->getHash()."]";
+    }
+
 }

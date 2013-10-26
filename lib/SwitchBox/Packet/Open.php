@@ -92,13 +92,10 @@ class Open implements iProcessor {
         }
 
         $from = $switchbox->getMesh()->seen(bin2hex($hash));
-        if ($from) {
-            print "Already know about ".$from->getHash().".. :)\n";
-        } else {
+        if (! $from) {
+            // @TODO: add to mesh?? How about our line and secrets?
             die ("No idea who '".bin2hex($hash)."' is.. :(\n");
-
             //$from = new Node(new Hash(bin2hex($hash)));
-            // @TODO: add to mesh??
         }
 
         if ($innerHeader['at'] < $from->getOpenAt()) {
@@ -127,24 +124,23 @@ class Open implements iProcessor {
         // Derive secret key
         $curve = \phpecc\NISTcurve::generator_256();
         $bob = \phpecc\PublicKey::decode($curve, bin2hex($decrypted));
-
-        $ecc = $from->getEcc();
         /** @var $alice \phpecc\PrivateKey */
+        $ecc = $from->getEcc();
         $alicePriv = $ecc->privkey;
-        $alicePub = $ecc->pubkey;
 
         $ecDH = new EcDH($curve);
         $ecDH->setPublicPoint($bob->getPoint());
-        $ecDH->secret = $alicePriv->secret_multiplier;
-        $ecDH->calculateKey();
-        $ecdhe = $ecDH->getAgreedKey();
+        $ecdhe = $ecDH->getDerivedSharedSecret($alicePriv->getSecretMultiplier());
 
+
+        // Hash everything into an encode and decode key
         $ctx = hash_init('sha256');
         hash_update($ctx, hex2bin(\phpecc\Utilities\GMP::gmp_dechex($ecdhe)));
         hash_update($ctx, hex2bin($from->getLineOut()));
         hash_update($ctx, hex2bin($from->getLineIn()));
         $key = hash_final($ctx, true);
         $from->setEncryptionKey($key);
+        print "EK: ".bin2hex($key)."\n";
 
         $ctx = hash_init('sha256');
         hash_update($ctx, hex2bin(\phpecc\Utilities\GMP::gmp_dechex($ecdhe)));
@@ -152,6 +148,11 @@ class Open implements iProcessor {
         hash_update($ctx, hex2bin($from->getLineOut()));
         $key = hash_final($ctx, true);
         $from->setDecryptionKey($key);
+        print "DK: ".bin2hex($key)."\n";
+
+        print $from;
+
+        print "\n";
     }
 
 
