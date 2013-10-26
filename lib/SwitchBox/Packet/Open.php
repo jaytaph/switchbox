@@ -2,8 +2,10 @@
 
 namespace SwitchBox\Packet;
 
+use phpecc\EcDH;
 use phpecc\NISTcurve;
 use phpecc\Point;
+use phpecc\PrivateKey;
 use phpecc\PublicKey;
 use phpecc\Utilities\Gmp;
 use SwitchBox\DHT\Hash;
@@ -30,8 +32,6 @@ class Open implements iProcessor {
         if (! $decrypted) {
             throw new \InvalidArgumentException("couldn't decrypt open");
         }
-
-//        $eccPubKey = \phpecc\PublicKey::decode(\phpecc\NISTcurve::generator_256(), bin2hex($decrypted));
 
         if (strlen($packet->getBody()) == 0) {
             throw new \InvalidArgumentException("body missing on open");
@@ -95,8 +95,9 @@ class Open implements iProcessor {
         if ($from) {
             print "Already know about ".$from->getHash().".. :)\n";
         } else {
-            print "No idea who '".bin2hex($hash)."' is.. :(\n";
-            $from = new Node(new Hash(bin2hex($hash)));
+            die ("No idea who '".bin2hex($hash)."' is.. :(\n");
+
+            //$from = new Node(new Hash(bin2hex($hash)));
             // @TODO: add to mesh??
         }
 
@@ -123,21 +124,32 @@ class Open implements iProcessor {
         // we have an open line to the other side..
         $from->setLineIn($innerHeader['line']);
 
-        // @TODO: var $ecdhe = from.eccOut.deriveSharedSecret(eccKey);
-        $ecdhe = "@todo";
-        print "ECDHE : ".$ecdhe."\n";
+        // Derive secret key
+        $curve = \phpecc\NISTcurve::generator_256();
+        $bob = \phpecc\PublicKey::decode($curve, bin2hex($decrypted));
+
+        $ecc = $from->getEcc();
+        /** @var $alice \phpecc\PrivateKey */
+        $alicePriv = $ecc->privkey;
+        $alicePub = $ecc->pubkey;
+
+        $ecDH = new EcDH($curve);
+        $ecDH->setPublicPoint($bob->getPoint());
+        $ecDH->secret = $alicePriv->secret_multiplier;
+        $ecDH->calculateKey();
+        $ecdhe = $ecDH->getAgreedKey();
 
         $ctx = hash_init('sha256');
-        hash_update($ctx, $ecdhe);
-        hash_update($ctx, $from->getLineOut());
-        hash_update($ctx, $from->getLineIn());
+        hash_update($ctx, hex2bin(\phpecc\Utilities\GMP::gmp_dechex($ecdhe)));
+        hash_update($ctx, hex2bin($from->getLineOut()));
+        hash_update($ctx, hex2bin($from->getLineIn()));
         $key = hash_final($ctx, true);
         $from->setEncryptionKey($key);
 
         $ctx = hash_init('sha256');
-        hash_update($ctx, $ecdhe);
-        hash_update($ctx, $from->getLineIn());
-        hash_update($ctx, $from->getLineOut());
+        hash_update($ctx, hex2bin(\phpecc\Utilities\GMP::gmp_dechex($ecdhe)));
+        hash_update($ctx, hex2bin($from->getLineIn()));
+        hash_update($ctx, hex2bin($from->getLineOut()));
         $key = hash_final($ctx, true);
         $from->setDecryptionKey($key);
     }
@@ -150,6 +162,9 @@ class Open implements iProcessor {
         $to->rsaPubKey = $seed->getPublicKey();
         $to->hash = $seed->getHash();
         $to->line = bin2hex(openssl_random_pseudo_bytes(16));
+
+        $to_node = new Node(new Hash($to->hash));
+        $to_node->setLineIn($to->line);
 
         // 1. Verify public key
         $res = openssl_pkey_get_public($to->rsaPubKey);
@@ -177,13 +192,16 @@ class Open implements iProcessor {
         $secretG = Point::mul($secret, $g);
 
         $ecc = new \StdClass();
-        $ecc_pubkey = new PublicKey($g, $secretG);
-        //$ecc_privkey = new PrivateKey($ecc_pubkey, $secret); // Not needed
-        $ecc->pubkey = hex2bin($ecc_pubkey->encode());
+        $ecc->pubkey = new PublicKey($g, $secretG);
+        $ecc->privkey = new PrivateKey($ecc->pubkey, $secret);
+
+        $to_node->setEcc($ecc);
+        $to_node->setLineOut($to->line);
+        $switchbox->getMesh()->addNode($to_node);
 
 
         // 4. SHA256 hash ECC key
-        $hash = hash('sha256', $ecc->pubkey, true);
+        $hash = hash('sha256', hex2bin($ecc->pubkey->encode()), true);
 
         // 5. Form inner packet
         $header = array(
@@ -209,7 +227,7 @@ class Open implements iProcessor {
         openssl_sign($body, $sig, $switchbox->getKeyPair()->getPrivateKey(), "sha256");
 
         $ctx = hash_init('sha256');
-        hash_update($ctx, $ecc->pubkey);
+        hash_update($ctx, hex2bin($ecc->pubkey->encode()));
         hash_update($ctx, hex2bin($to->line));
         $aes_key = hash_final($ctx, true);
 
@@ -221,7 +239,7 @@ class Open implements iProcessor {
         $sig = base64_encode($aes);
 
         // 8. Create open param
-        openssl_public_encrypt($ecc->pubkey, $open, $to->rsaPubKey, OPENSSL_PKCS1_OAEP_PADDING);
+        openssl_public_encrypt(hex2bin($ecc->pubkey->encode()), $open, $to->rsaPubKey, OPENSSL_PKCS1_OAEP_PADDING);
         $open = base64_encode($open);
 
         // 9. Form outer packet
