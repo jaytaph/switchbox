@@ -2,6 +2,8 @@
 
 namespace SwitchBox\DHT;
 
+use phpecc\PublicKey;
+
 class Node {
     /** @var Hash */
     protected $hash;
@@ -15,6 +17,9 @@ class Node {
     protected $port;                        // Port that connected
     protected $line_in;                     // Line in string
     protected $line_out;                    // Line out string
+
+    /** @var PublicKey */
+    protected $ecc;                         // Our generated ECC public key
 
     protected $encryption_key;              // Line encryption key
     protected $decryption_key;              // Line decryption key
@@ -197,6 +202,22 @@ class Node {
     public function getEncryptionKey()
     {
         return $this->encryption_key;
+    }
+
+    /**
+     * @param \stdClass $ecc
+     */
+    public function setEcc(\stdClass $ecc)
+    {
+        $this->ecc = $ecc;
+    }
+
+    /**
+     * @return stdClass
+     */
+    public function getEcc()
+    {
+        return $this->ecc;
     }
 
 
