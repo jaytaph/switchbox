@@ -11,11 +11,21 @@ More information about telehash can be found at http://telehash.org
 
 Installation
 ------------
+  
+ - Clone repository
+ - Download composer.phar from getcomposer.org
+ - Run the following command from the repository root to install dependencies
+  
+       
+        php composer.phar install from the repository root
 
-  # Clone repository
-  # Download composer.phar from getcomposer.org
-  # run: php composer.phar install from the repository root
-  # run: php app.php
 
-On initial run, it will create a new pubkey.pem and privkey.pem in the root. This will
-automatically create your nodename.
+ - Run the test application: 
+ 
+       
+        php app.php
+
+
+
+On initial run, it will create a new seed.json file in your project root. This will
+be your public and private keys, and your nodename.
