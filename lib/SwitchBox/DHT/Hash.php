@@ -31,7 +31,7 @@ class Hash {
      */
     function getHash($format = Hash::OUTPUT_HEX) {
         if ($format == Hash::OUTPUT_BINARY) {
-            return hex2bin($this->hash);
+            return Utils::hex2bin($this->hash);
         }
 
         if ($format == Hash::OUTPUT_BYTE_ARRAY) {

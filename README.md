@@ -1,7 +1,9 @@
 switchbox
 =========
 
-implementation of a PHP client for the v2 telehash protocol
+[![Build Status](https://travis-ci.org/jaytaph/switchbox.png?branch=master)](https://travis-ci.org/jaytaph/switchbox)
+
+Implementation of a PHP client for the v2 telehash protocol
 
 More information about telehash can be found at http://telehash.org
 

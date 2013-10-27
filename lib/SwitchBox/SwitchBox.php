@@ -11,20 +11,6 @@ use SwitchBox\Packet\Open;
 if (! defined('USE_EXT')) define('USE_EXT', 'GMP');
 
 
-// Pre 5.4 needs hex2bin
-if ( !function_exists( 'hex2bin' ) ) {
-    function hex2bin( $str ) {
-        $sbin = "";
-        $len = strlen( $str );
-        for ( $i = 0; $i < $len; $i += 2 ) {
-            $sbin .= pack( "H*", substr( $str, $i, 2 ) );
-        }
-
-        return $sbin;
-    }
-}
-
-
 class SwitchBox {
     const SELECT_TIMEOUT        = 2;        // Nr of seconds before socket_select() will timeout to do housekeeping
 
