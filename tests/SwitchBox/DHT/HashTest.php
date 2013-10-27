@@ -5,7 +5,7 @@ use SwitchBox\DHT\Hash;
 class SwitchBox_DHT_HashTest extends PHPUnit_Framework_TestCase {
 
     function testHashConstructing() {
-        $hash = new Hash("8843d7f92416211de9ebb963ff4ce28125932878");
+        $hash = new Hash("2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b");   // secret
     }
 
     static function incorrectHashes() {
@@ -13,7 +13,7 @@ class SwitchBox_DHT_HashTest extends PHPUnit_Framework_TestCase {
             array(""),
             array("0"),
             array("8843d7f92416211de9ebb963ff4ce28125932"),
-            array("XX43d7f92416211de9ebb963ff4ce281259328XX"),
+            array("2bXX0d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a2XX"),
             array(true),
         );
     }
@@ -27,15 +27,15 @@ class SwitchBox_DHT_HashTest extends PHPUnit_Framework_TestCase {
     }
 
     function testGetHash() {
-        $hash = new Hash("8843d7f92416211de9ebb963ff4ce28125932878");   // foobar
-        $this->assertEquals($hash->gethash(), "8843d7f92416211de9ebb963ff4ce28125932878");
-        $this->assertEquals($hash->gethash(Hash::OUTPUT_HEX), "8843d7f92416211de9ebb963ff4ce28125932878");
-        $this->assertEquals($hash->gethash(Hash::OUTPUT_BINARY), hex2bin("8843d7f92416211de9ebb963ff4ce28125932878"));
+        $hash = new Hash("c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2");   // foobar
+        $this->assertEquals($hash->gethash(), "c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2");
+        $this->assertEquals($hash->gethash(Hash::OUTPUT_HEX), "c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2");
+        $this->assertEquals($hash->gethash(Hash::OUTPUT_BINARY), hex2bin("c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2"));
     }
 
     function testEquals() {
-        $hash1 = new Hash("8843d7f92416211de9ebb963ff4ce28125932878");
-        $hash2 = new Hash("8843d7f92416211de9ebb963ff4ce28125932800");
+        $hash1 = new Hash("c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2");
+        $hash2 = new Hash("2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b");
 
         $this->assertTrue($hash1->equals($hash1));
         $this->assertTrue($hash2->equals($hash2));
@@ -44,27 +44,27 @@ class SwitchBox_DHT_HashTest extends PHPUnit_Framework_TestCase {
     }
 
     function testBinaryOr() {
-        $hash1 = new Hash("8843d7f92416211de9ebb963ff4ce28125932878");      // foobar
-        $hash2 = new Hash("8843d7f02416011de0ebb960000ce20005000800");
-        $hash3 = new Hash("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
-        $hash4 = new Hash("0000000000000000000000000000000000000000");
-        $hash5 = new Hash("8080808080808080808080808080808080808080");
-        $hash6 = new Hash("e5e9fa1ba31ecd1ae84f75caaa474f3a663f05f4");      // secret
+        $hash1 = new Hash("c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2");      // foobar
+        $hash2 = new Hash("c3Fb8f213F20e8Fd9047df39466b3c8974ff92c2fa383d4a3960710000f0ffff");
+        $hash3 = new Hash("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+        $hash4 = new Hash("0000000000000000000000000000000000000000000000000000000000000000");
+        $hash5 = new Hash("8080808080808080808080808080808080808080808080808080808080808080");
+        $hash6 = new Hash("2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b");      // secret
 
-        $this->assertEquals($hash1->binaryXor($hash1)->getHash(), "0000000000000000000000000000000000000000");
-        $this->assertEquals($hash1->binaryXor($hash2)->getHash(), "000000090000200009000003ff40008120932078");
-        $this->assertEquals($hash1->binaryXor($hash3)->getHash(), "77bc2806dbe9dee21614469c00b31d7eda6cd787");
-        $this->assertEquals($hash1->binaryXor($hash4)->getHash(), "8843d7f92416211de9ebb963ff4ce28125932878");
-        $this->assertEquals($hash1->binaryXor($hash5)->getHash(), "08c35779a496a19d696b39e37fcc6201a513a8f8");
-        $this->assertEquals($hash1->binaryXor($hash6)->getHash(), "6daa2de28708ec0701a4cca9550badbb43ac2d8c");
+        $this->assertEquals($hash1->binaryXor($hash1)->getHash(), "0000000000000000000000000000000000000000000000000000000000000000");
+        $this->assertEquals($hash1->binaryXor($hash2)->getHash(), "005000d0080000500000020000000000001a0000000000000000004cae003b0d");
+        $this->assertEquals($hash1->binaryXor($hash3)->getHash(), "3c54700ec8df17526fb822c6b994c3768b1a6d3d05c7c2b5c69f8eb3510f3b0d");
+        $this->assertEquals($hash1->binaryXor($hash4)->getHash(), "c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2");
+        $this->assertEquals($hash1->binaryXor($hash5)->getHash(), "432b0f71b7a0682d10c75db9c6ebbc09f46512427ab8bdcab9e0f1cc2e704472");
+        $this->assertEquals($hash1->binaryXor($hash6)->getHash(), "e81382a24c3d4b4e1b94de58ecee6a0fc905780f8b5ac3bc9b3f98375bd766a9");
     }
 
     /**
      *
      */
     function testCompare() {
-        $hash1 = new Hash("8843d7f92416211de9ebb963ff4ce28125932878");
-        $hash2 = new Hash("8843d7f92416211de9ebb963ff4ce28125932800");
+        $hash1 = new Hash("2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b");
+        $hash2 = new Hash("2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a200");
 
         $this->assertEquals($hash1->compare($hash1), 0);
         $this->assertEquals($hash2->compare($hash2), 0);
@@ -75,18 +75,18 @@ class SwitchBox_DHT_HashTest extends PHPUnit_Framework_TestCase {
     }
 
     function testDistance() {
-        $hash1 = new Hash("8843d7f92416211de9ebb963ff4ce28125932878");      // foobar
-        $hash2 = new Hash("8843d7f92416211de9ebb963ff4ce28125932876");
-        $hash3 = new Hash("8843d7f92416211de9ebb963ff4ce28125932858");
-        $hash4 = new Hash("0000000000000000000000000000000000000000");
-        $hash5 = new Hash("884Fd7f92416211de9ebb963ff4ce28125932878");
-        $hash6 = new Hash("e5e9fa1ba31ecd1ae84f75caaa474f3a663f05f4");      // secret
+        $hash1 = new Hash("c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2");      // foobar
+        $hash2 = new Hash("c3Fb8f213F20e8Fd9047df39466b3c8974ff92c2fa383d4a3960710000f0ffff");
+        $hash3 = new Hash("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+        $hash4 = new Hash("0000000000000000000000000000000000000000000000000000000000000000");
+        $hash5 = new Hash("8080808080808080808080808080808080808080808080808080808080808080");
+        $hash6 = new Hash("2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b");      // secret
 
-        $this->assertEquals($hash1->distance($hash2), 99);
-        $this->assertEquals($hash1->distance($hash3), 101);
+        $this->assertEquals($hash1->distance($hash2), 246);
+        $this->assertEquals($hash1->distance($hash3), 253);
         $this->assertEquals($hash1->distance($hash4), 255);
-        $this->assertEquals($hash1->distance($hash5), 243);
-        $this->assertEquals($hash1->distance($hash6), 254);
+        $this->assertEquals($hash1->distance($hash5), 254);
+        $this->assertEquals($hash1->distance($hash6), 255);
 
         $this->assertEquals($hash1->distance($hash1), -1);
         $this->assertEquals($hash2->distance($hash1), $hash1->distance($hash2));
