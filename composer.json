@@ -4,6 +4,12 @@
     "keywords" : [ "PHP", "TeleHash" ],
     "homepage" : "https://github.com/jaytaph/SwitchBox",
     "license" : "3-Clause BSD",
+    "repositories": [
+        {
+            "type": "git",
+            "url": "https://github.com/jaytaph/danter-php-ecc"
+        }
+    ],
     "require" : {
         "php" : ">=5.3.3",
         "xqus/phpecc" : "dev-master",
