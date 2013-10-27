@@ -1,8 +1,5 @@
 <?php
 
-use SwitchBox\Packet\Open;
-use SwitchBox\Packet;
-
 include "vendor/autoload.php";
 
 // Initial seeds to connect to.
@@ -24,7 +21,7 @@ $json = json_decode(file_get_contents("seed.json"));
 $keypair = new SwitchBox\KeyPair($json->private, $json->public);
 
 $sb = new SwitchBox\SwitchBox($seeds, $keypair);
-print "Online as: [".$sb->getSelfNode()->getHash()."]\n";
+print "\n*** Online as: [".$sb->getSelfNode()->getHash()."]\n\n";
 
 $sb->loop();
 exit;
