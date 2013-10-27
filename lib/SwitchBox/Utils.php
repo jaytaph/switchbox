@@ -4,6 +4,20 @@ namespace SwitchBox;
 
 class Utils {
 
+    static function hex2bin($str) {
+        if (function_exists( 'hex2bin')) {
+            return hex2bin($str);
+        }
+
+        // Pre 5.4 doesn't have hex2bin
+        $sbin = "";
+        $len = strlen( $str );
+        for ($i=0; $i<$len; $i+=2) {
+            $sbin .= pack("H*", substr($str, $i, 2 ));
+        }
+        return $sbin;
+    }
+
     /**
      * Return the DER length of a string
      *

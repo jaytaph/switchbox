@@ -30,7 +30,7 @@ class SwitchBox_DHT_HashTest extends PHPUnit_Framework_TestCase {
         $hash = new Hash("c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2");   // foobar
         $this->assertEquals($hash->gethash(), "c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2");
         $this->assertEquals($hash->gethash(Hash::OUTPUT_HEX), "c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2");
-        $this->assertEquals($hash->gethash(Hash::OUTPUT_BINARY), hex2bin("c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2"));
+        $this->assertEquals($hash->gethash(Hash::OUTPUT_BINARY), Utils::hex2bin("c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2"));
     }
 
     function testEquals() {

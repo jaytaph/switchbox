@@ -40,7 +40,7 @@ class Open implements iProcessor {
         $hash = hash('sha256', $decrypted, true);
 
         $cipher = new \Crypt_AES(CRYPT_AES_MODE_CTR);
-        $cipher->setIv(hex2bin($header['iv']));
+        $cipher->setIv(Utils::hex2bin($header['iv']));
         $cipher->setKey($hash);
         $body = $cipher->decrypt($packet->getBody());
 
@@ -79,11 +79,11 @@ class Open implements iProcessor {
         // Decrypt signature
         $ctx = hash_init('sha256');
         hash_update($ctx, $decrypted);
-        hash_update($ctx, hex2bin($innerHeader['line']));
+        hash_update($ctx, Utils::hex2bin($innerHeader['line']));
         $aes_key = hash_final($ctx, true);
 
         $cipher = new \Crypt_AES(CRYPT_AES_MODE_CTR);
-        $cipher->setIv(hex2bin($header['iv']));
+        $cipher->setIv(Utils::hex2bin($header['iv']));
         $cipher->setKey($aes_key);
         $dec_sig = $cipher->encrypt(base64_decode($header['sig']));
 
@@ -135,17 +135,17 @@ class Open implements iProcessor {
 
         // Hash everything into an encode and decode key
         $ctx = hash_init('sha256');
-        hash_update($ctx, hex2bin(\phpecc\Utilities\GMP::gmp_dechex($ecdhe)));
-        hash_update($ctx, hex2bin($from->getLineOut()));
-        hash_update($ctx, hex2bin($from->getLineIn()));
+        hash_update($ctx, Utils::hex2bin(\phpecc\Utilities\GMP::gmp_dechex($ecdhe)));
+        hash_update($ctx, Utils::hex2bin($from->getLineOut()));
+        hash_update($ctx, Utils::hex2bin($from->getLineIn()));
         $key = hash_final($ctx, true);
         $from->setEncryptionKey($key);
         print "EK: ".bin2hex($key)."\n";
 
         $ctx = hash_init('sha256');
-        hash_update($ctx, hex2bin(\phpecc\Utilities\GMP::gmp_dechex($ecdhe)));
-        hash_update($ctx, hex2bin($from->getLineIn()));
-        hash_update($ctx, hex2bin($from->getLineOut()));
+        hash_update($ctx, Utils::hex2bin(\phpecc\Utilities\GMP::gmp_dechex($ecdhe)));
+        hash_update($ctx, Utils::hex2bin($from->getLineIn()));
+        hash_update($ctx, Utils::hex2bin($from->getLineOut()));
         $key = hash_final($ctx, true);
         $from->setDecryptionKey($key);
         print "DK: ".bin2hex($key)."\n";
@@ -202,7 +202,7 @@ class Open implements iProcessor {
 
 
         // 4. SHA256 hash ECC key
-        $hash = hash('sha256', hex2bin($ecc->pubkey->encode()), true);
+        $hash = hash('sha256', Utils::hex2bin($ecc->pubkey->encode()), true);
 
         // 5. Form inner packet
         $header = array(
@@ -228,8 +228,8 @@ class Open implements iProcessor {
         openssl_sign($body, $sig, $switchbox->getKeyPair()->getPrivateKey(), "sha256");
 
         $ctx = hash_init('sha256');
-        hash_update($ctx, hex2bin($ecc->pubkey->encode()));
-        hash_update($ctx, hex2bin($to->line));
+        hash_update($ctx, Utils::hex2bin($ecc->pubkey->encode()));
+        hash_update($ctx, Utils::hex2bin($to->line));
         $aes_key = hash_final($ctx, true);
 
         $cipher = new \Crypt_AES(CRYPT_AES_MODE_CTR);
@@ -240,7 +240,7 @@ class Open implements iProcessor {
         $sig = base64_encode($aes);
 
         // 8. Create open param
-        openssl_public_encrypt(hex2bin($ecc->pubkey->encode()), $open, $to->rsaPubKey, OPENSSL_PKCS1_OAEP_PADDING);
+        openssl_public_encrypt(Utils::hex2bin($ecc->pubkey->encode()), $open, $to->rsaPubKey, OPENSSL_PKCS1_OAEP_PADDING);
         $open = base64_encode($open);
 
         // 9. Form outer packet
