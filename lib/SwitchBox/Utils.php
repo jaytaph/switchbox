@@ -4,8 +4,14 @@ namespace SwitchBox;
 
 class Utils {
 
+    static function bin2hex($str) {
+        return bin2hex($str);
+    }
+
     static function hex2bin($str) {
         if (function_exists( 'hex2bin')) {
+            // When hash starts with leading 0's it gets cut away by PHP during string casting. Hurrah!
+            while (strlen($str) < 32) $str = "0" . $str;
             return hex2bin($str);
         }
 

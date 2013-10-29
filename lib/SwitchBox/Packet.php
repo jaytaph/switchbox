@@ -6,6 +6,7 @@
 
 namespace SwitchBox;
 
+use SwitchBox\Packet\Line;
 use SwitchBox\Packet\Open;
 
 class Packet {
@@ -15,7 +16,7 @@ class Packet {
     protected $body;
     /** @var  string    One of the TYPE_* constants */
     protected $type;
-    protected $processor = null;
+//    protected $processor = null;
 
     protected $timestamp;
 
@@ -74,11 +75,11 @@ class Packet {
         switch ($this->header['type']) {
             case "open" :
                 $this->type = self::TYPE_OPEN;
-                $this->processor = new Open($this->switchbox, $this);
+//                $this->processor = new Open($this->switchbox, $this);
                 break;
             case "line" :
-                $this->type = self::TYPE_OPEN;
-                $this->processor = new Line($this->switchbox, $this);
+                $this->type = self::TYPE_LINE;
+//                $this->processor = new Line($this->switchbox, $this);
                 break;
         }
     }
@@ -101,10 +102,16 @@ class Packet {
      * @param $bindata
      * @return Packet
      */
-    static function decode(SwitchBox $switchbox, $bindata) {
+    static function decode(SwitchBox $switchbox, $bindata, $ip = null, $port = null) {
         $res1  = unpack('nlen/A*rest', $bindata);
         $res2 = unpack('A'.$res1['len'].'json/A*body', $res1['rest']);
-        return new Packet($switchbox, json_decode($res2['json'], true), $res2['body']);
+        $packet = new Packet($switchbox, json_decode($res2['json'], true), $res2['body']);
+
+        // set packet's originating IP and port number
+        if ($ip && $port) {
+            $packet->setFrom($ip, $port);
+        }
+        return $packet;
     }
 
     /**

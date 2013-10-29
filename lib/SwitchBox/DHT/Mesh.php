@@ -6,10 +6,20 @@ class Mesh {
 
     protected $nodes = array();
 
+
+    function findByLine($line) {
+        foreach ($this->nodes as $node) {
+            /** @var $node Node */
+            print "Node: ".$node->getHash()->getHash()." Line: ".$node->getLineOut()."\n";
+            if ($node->getLineOut() == $line) return $node;
+        }
+        return null;
+    }
     /**
      * @param Node $node
      */
     function addNode(Node $node) {
+        print "*** Adding node to mesh: ".$node->getHash()."\n";
         $this->nodes[$node->getHash()->getHash()] = $node;
     }
 
@@ -29,7 +39,6 @@ class Mesh {
         if ($this->nodeExists($hash)) return $this->nodes[$hash];
         return null;
     }
-
 
     /**
      * drop hn into its appropriate bucket
