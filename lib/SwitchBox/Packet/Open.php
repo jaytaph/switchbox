@@ -15,8 +15,16 @@ use SwitchBox\Seed;
 use SwitchBox\SwitchBox;
 use SwitchBox\Utils;
 
-class Open implements iProcessor {
+class Open {
 
+    /**
+     * @param SwitchBox $switchbox
+     * @param Packet $packet
+     * @return null|Node
+     * @throws \LogicException
+     * @throws \InvalidArgumentException
+     * @throws \Exception
+     */
     static function process(SwitchBox $switchbox, Packet $packet) {
         $header = $packet->getHeader();
         if ($header['type'] != "open") {
@@ -91,11 +99,14 @@ class Open implements iProcessor {
             throw new \InvalidArgumentException("invalid signature");
         }
 
-        $from = $switchbox->getMesh()->seen(bin2hex($hash));
+        print "Trying to find: ".Utils::bin2hex($hash)."\n";
+        $from = $switchbox->getMesh()->seen(Utils::bin2hex($hash));
         if (! $from) {
             // @TODO: add to mesh?? How about our line and secrets?
-            die ("No idea who '".bin2hex($hash)."' is.. :(\n");
+            die ("No idea who '".Utils::bin2hex($hash)."' is.. :(\n");
             //$from = new Node(new Hash(bin2hex($hash)));
+            print "FROM: ";
+            print_r($from);
         }
 
         if ($innerHeader['at'] < $from->getOpenAt()) {
@@ -109,13 +120,14 @@ class Open implements iProcessor {
         $from->setPort($packet->getFromPort());
         $from->setRecvAt(time());
 
-        if ($from->getLineIn() != $innerHeader['line']) {
+        if ($from->getLineIn() != null && $from->getLineIn() != $innerHeader['line']) {
             $from->setSentOpenPacket(false);
         }
 
-        if (! $from->hasSentOpenPacket()) {
-            // @TODO: Sent an open packet to the NODE $from
-        }
+//        if (! $from->hasSentOpenPacket()) {
+//            // @TODO: Sent an open packet to the NODE $from
+//            throw new \Exception("We need to send an returning open packet to node.");
+//        }
 
 
         // we have an open line to the other side..
@@ -123,7 +135,7 @@ class Open implements iProcessor {
 
         // Derive secret key
         $curve = \phpecc\NISTcurve::generator_256();
-        $bob = \phpecc\PublicKey::decode($curve, bin2hex($decrypted));
+        $bob = \phpecc\PublicKey::decode($curve, Utils::bin2hex($decrypted));
         /** @var $alice \phpecc\PrivateKey */
         $ecc = $from->getEcc();
         $alicePriv = $ecc->privkey;
@@ -140,7 +152,7 @@ class Open implements iProcessor {
         hash_update($ctx, Utils::hex2bin($from->getLineIn()));
         $key = hash_final($ctx, true);
         $from->setEncryptionKey($key);
-        print "EK: ".bin2hex($key)."\n";
+        print "EK: ".Utils::bin2hex($key)."\n";
 
         $ctx = hash_init('sha256');
         hash_update($ctx, Utils::hex2bin(\phpecc\Utilities\GMP::gmp_dechex($ecdhe)));
@@ -148,11 +160,12 @@ class Open implements iProcessor {
         hash_update($ctx, Utils::hex2bin($from->getLineOut()));
         $key = hash_final($ctx, true);
         $from->setDecryptionKey($key);
-        print "DK: ".bin2hex($key)."\n";
+        print "DK: ".Utils::bin2hex($key)."\n";
 
         print $from;
 
         print "\n";
+        return $from;
     }
 
 
@@ -162,10 +175,10 @@ class Open implements iProcessor {
 
         $to->rsaPubKey = $seed->getPublicKey();
         $to->hash = $seed->getHash();
-        $to->line = bin2hex(openssl_random_pseudo_bytes(16));
+        $to->line = Utils::bin2hex(openssl_random_pseudo_bytes(16));
 
         $to_node = new Node(new Hash($to->hash));
-        $to_node->setLineIn($to->line);
+        $to_node->setLineOut($to->line);
 
         // 1. Verify public key
         $res = openssl_pkey_get_public($to->rsaPubKey);
@@ -196,8 +209,8 @@ class Open implements iProcessor {
         $ecc->pubkey = new PublicKey($g, $secretG);
         $ecc->privkey = new PrivateKey($ecc->pubkey, $secret);
 
+        // Add the node to the mesh, so we can find it
         $to_node->setEcc($ecc);
-        $to_node->setLineOut($to->line);
         $switchbox->getMesh()->addNode($to_node);
 
 
@@ -247,12 +260,10 @@ class Open implements iProcessor {
         $header = array(
             'type' => 'open',
             'open' => $open,
-            'iv' => bin2hex($iv),
+            'iv' => Utils::bin2hex($iv),
             'sig' => $sig,
         );
-        $packet = new Packet($switchbox, $header, $body);
-
-        return $packet;
+        return  new Packet($switchbox, $header, $body);
     }
 
 }

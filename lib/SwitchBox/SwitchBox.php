@@ -5,6 +5,7 @@ namespace SwitchBox;
 use SwitchBox\DHT\Mesh;
 use SwitchBox\DHT\Hash;
 use SwitchBox\DHT\Node;
+use SwitchBox\Packet\Line;
 use SwitchBox\Packet\Open;
 
 // Make sure we are using GMP extension for AES libraries
@@ -18,7 +19,7 @@ class SwitchBox {
     protected $keypair;
     /** @var DHT\Node */
     protected $self_node;
-    /** @var resource */
+    /** @var resource UDP socket connecting to mesh */
     protected $sock;
     /** @var DHT\Mesh */
     protected $mesh;
@@ -35,13 +36,14 @@ class SwitchBox {
         $hash = hash('sha256', Utils::convertPemToDer($this->getKeyPair()->getPublicKey()));
         $this->self_node = new Node(new Hash($hash));
 
-        // Setup socket
+        // Setup UDP mesh socket
         $this->sock = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
         socket_set_nonblock($this->sock);
         foreach ($seeds as $seed) {
             if (! $seed instanceof Seed) continue;
             $this->txqueue->enqueue_packet($seed->getHost(), $seed->getPort(), Open::generate($this, $seed, null));
         }
+
     }
 
     /**
@@ -108,14 +110,12 @@ class SwitchBox {
             print "\n";
             foreach ($r as $sock) {
                 print "Retrieving info from socket...\n";
-                $ip = "";
-                $port = 0;
-                $ret= socket_recvfrom($sock, $buf, 2048, 0, $ip, $port);
 
+                $ip = ""; $port = 0;
+                socket_recvfrom($sock, $buf, 2048, 0, $ip, $port);
                 print "loop() Connection from: $ip : $port\n";
 
-                $packet = Packet::decode($this, $buf);
-                $packet->setFrom($ip, $port);
+                $packet = Packet::decode($this, $buf, $ip, $port);
                 if ($packet == NULL) {
                     print "loop() Unknown data. Not a packet!\n";
                     continue;
@@ -123,13 +123,27 @@ class SwitchBox {
 
                 print "loop() Incoming '".$packet->getType(true)."' packet from ".$packet->getFromIp().":".$packet->getFromPort()."\n";
 
-                if ($packet->getType() != Packet::TYPE_OPEN) {
-                    printf ("loop() Cannot decode this type of packet yet :(\n");
+                // @TODO: Packet should already have it's processor:  $packet->process($this, $buf);
+
+                if ($packet->getType() == Packet::TYPE_OPEN) {
+                    // Check packet type, decode correct packet type...
+                    /** @var $node DHT\Node */
+                    $node = Open::process($this, $packet);
+
+                    // Try and do a seek to ourselves
+                    $packet = Line::generate($this, $node, Line\Seek::generate($this, $node));
+                    $this->txqueue->enqueue_packet($node->getIp(), $node->getPort(), $packet);
+
+                    continue;
+                }
+                if ($packet->getType() == Packet::TYPE_LINE) {
+                    Line::process($this, $packet);
+
                     continue;
                 }
 
-                // Check packet type, decode correct packet type...
-                Open::process($this, Packet::decode($this, $buf));
+                printf ("loop() Cannot decode this type of packet yet :(\n");
+                continue;
             }
         }
 
