@@ -10,38 +10,10 @@ $seeds = array(
     new SwitchBox\Seed("208.68.164.253", 42424, "5fa6f146d784c9ae6f6d762fbc56761d472f3d097dfba3915c890eec9b79a088", "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxoQkh8uIPe18Ym5kO3VX\nqPhKsc7vhrMMH8HgUO3tSZeIcowHxZe+omFadTvquW4az7CV/+3EBVHWzuX90Vof\nsDsgbPXhzeV/TPOgrwz9B6AgEAq+UZ+cs5BSjZXXQgFrTHzEy9uboio+StBt3nB9\npLi/LlB0YNIoEk83neX++6dN63C3mSa55P8r4FvCWUXue2ZWfT6qamSGQeOPIUBo\n4aiN6P4Hzqaco6YRO9v901jV+nq0qp0yHKnxlIYgiY7501vXWceMtnqcEkgzX4Rr\n7nIoA6QnlUMkTUDP7N3ariNSwl8OL1ZjsFJz7XjfIJMQ+9kd1nNJ3sb4o3jOWCzj\nXwIDAQAB\n-----END PUBLIC KEY-----\n"),
 );
 
-// Generate new keypair if we can't find one
-if (! file_exists("seed.json")) {
-    print "Generating new keypair...\n";
-    generate_keypair("seed.json");
-}
-
-// Read keypair
-$json = json_decode(file_get_contents("seed.json"));
-$keypair = new SwitchBox\KeyPair($json->private, $json->public);
-
+// Read or generate keypair
+$keypair = new SwitchBox\KeyPair("seed.json", true);
 $sb = new SwitchBox\SwitchBox($seeds, $keypair);
 print "\n*** Online as: [".$sb->getSelfNode()->getHash()."]\n\n";
 
 $sb->loop();
 exit;
-
-
-/**
- * Generate a new keypair and save to a json file
- *
- * @param $filename
- */
-function generate_keypair($filename, $bits = 4096) {
-    $res = openssl_pkey_new(array(
-        "digest_algo" => "sha512",
-        "private_key_bits" => $bits,
-        "private_key_type" => OPENSSL_KEYTYPE_RSA,
-    ));
-
-    $tmp = openssl_pkey_get_details($res);
-    $keypair['public'] = $tmp['key'];
-    openssl_pkey_export($res, $keypair['private']);
-
-    file_put_contents($filename, json_encode($keypair));
-}
