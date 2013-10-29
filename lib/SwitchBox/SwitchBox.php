@@ -26,6 +26,7 @@ class SwitchBox {
     /** @var TxQueue */
     protected $txqueue;
 
+
     public function __construct(array $seeds, KeyPair $keypair) {
         // Setup generic structures
         $this->mesh = new Mesh($this);

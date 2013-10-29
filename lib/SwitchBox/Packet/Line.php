@@ -17,7 +17,7 @@ class Line {
 
         $from = $switchbox->getMesh()->findByLine($header['line']);
         if (! $from) {
-            throw new \InvalidArgumentException("Cannot find matching node for line ".$header['line']);
+            throw new \DomainException("Cannot find matching node for line ".$header['line']);
         }
 
         $cipher = new \Crypt_AES(CRYPT_AES_MODE_CTR);
