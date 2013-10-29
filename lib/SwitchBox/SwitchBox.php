@@ -34,7 +34,7 @@ class SwitchBox {
         // Create self node based on keypair
         $this->keypair = $keypair;
         $hash = hash('sha256', Utils::convertPemToDer($this->getKeyPair()->getPublicKey()));
-        $this->self_node = new Node(new Hash($hash));
+        $this->self_node = new Node($hash);
 
         // Setup UDP mesh socket
         $this->sock = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
@@ -74,7 +74,7 @@ class SwitchBox {
 
 
     public function __toString() {
-        return "SwitchBox[".$this->getSelfNode()->getHash()."]";
+        return "SwitchBox[".$this->getSelfNode()->getName()."]";
     }
 
     public function loop() {

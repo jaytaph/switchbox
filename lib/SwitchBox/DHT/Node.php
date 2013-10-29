@@ -5,8 +5,7 @@ namespace SwitchBox\DHT;
 use phpecc\PublicKey;
 
 class Node {
-    /** @var Hash */
-    protected $hash;
+    protected $name;                        // Hex string of hash / nodename
 
     protected $open_packet_sent = false;    // True when an open packet has been sent to this node
 
@@ -28,8 +27,8 @@ class Node {
     protected $bucket_idx = null;           // @TODO needed here?
 
 
-    function __construct(Hash $hash) {
-        $this->hash = $hash;
+    function __construct($name) {
+        $this->name = $name;
         $this->buckets = array();
     }
 
@@ -63,17 +62,17 @@ class Node {
         return $this->at;
     }
 
-    public function setHash(Hash $hash)
+    public function setName($name)
     {
-        $this->hash = $hash;
+        $this->name = $name;
     }
 
     /**
-     * @return Hash
+     * @return string
      */
-    public function getHash()
+    public function getName()
     {
-        return $this->hash;
+        return $this->name;
     }
 
     /**
@@ -241,7 +240,7 @@ class Node {
 
 
     function __toString() {
-        return $this->getIp().":".$this->getPort()."[".$this->getHash()."]";
+        return $this->getIp().":".$this->getPort()." [".$this->getName()."]";
     }
 
 }

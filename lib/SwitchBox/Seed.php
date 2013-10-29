@@ -7,20 +7,20 @@ namespace SwitchBox;
 class Seed {
     protected $host;
     protected $port;
-    protected $hash;
+    protected $name;
     protected $public_key;
 
-    public function __construct($host, $port, $hash, $public_key) {
+    public function __construct($host, $port, $name, $public_key) {
         $this->host = gethostbyname($host);
         $this->port = $port;
-        $this->hash = $hash;
+        $this->name = $name;
         $this->public_key = $public_key;
 
         hash('sha256', Utils::convertPemToDer($this->public_key));
     }
 
-    public function getHash() {
-        return $this->hash;
+    public function getName() {
+        return $this->name;
     }
 
     public function getHost()

@@ -10,7 +10,7 @@ class Mesh {
     function findByLine($line) {
         foreach ($this->nodes as $node) {
             /** @var $node Node */
-            print "Node: ".$node->getHash()->getHash()." Line: ".$node->getLineOut()."\n";
+            print "Node: ".$node->getName()." Line: ".$node->getLineOut()."\n";
             if ($node->getLineOut() == $line) return $node;
         }
         return null;
@@ -19,24 +19,24 @@ class Mesh {
      * @param Node $node
      */
     function addNode(Node $node) {
-        print "*** Adding node to mesh: ".$node->getHash()."\n";
-        $this->nodes[$node->getHash()->getHash()] = $node;
+        print "*** Adding node to mesh: ".$node->getName()."\n";
+        $this->nodes[$node->getName()] = $node;
     }
 
     /**
-     * @param $hash
+     * @param $name
      * @return bool
      */
-    function nodeExists($hash) {
-        return isset($this->nodes[$hash]);
+    function nodeExists($name) {
+        return isset($this->nodes[$name]);
     }
 
     /**
-     * @param $hash
+     * @param $name
      * @return null|Node
      */
-    function getNode($hash) {
-        if ($this->nodeExists($hash)) return $this->nodes[$hash];
+    function getNode($name) {
+        if ($this->nodeExists($name)) return $this->nodes[$name];
         return null;
     }
 
@@ -50,7 +50,9 @@ class Mesh {
     function bucketize(Node $self, Node $other, $force = false) {
         if (! $force && ! $other->getBucket()) return;
 
-        $bucketNr = $self->getHash()->distance($other->getHash());
+        $hash_self = new Hash($self->getName());
+        $hash_other = new Hash($other->getName());
+        $bucketNr = $hash_self->distance($hash_other);
         $self->addToBucket($bucketNr, $other);
 
     }

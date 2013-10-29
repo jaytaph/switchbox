@@ -99,7 +99,6 @@ class Open {
             throw new \InvalidArgumentException("invalid signature");
         }
 
-        print "Trying to find: ".Utils::bin2hex($hash)."\n";
         $from = $switchbox->getMesh()->seen(Utils::bin2hex($hash));
         if (! $from) {
             // @TODO: add to mesh?? How about our line and secrets?
@@ -152,7 +151,6 @@ class Open {
         hash_update($ctx, Utils::hex2bin($from->getLineIn()));
         $key = hash_final($ctx, true);
         $from->setEncryptionKey($key);
-        print "EK: ".Utils::bin2hex($key)."\n";
 
         $ctx = hash_init('sha256');
         hash_update($ctx, Utils::hex2bin(\phpecc\Utilities\GMP::gmp_dechex($ecdhe)));
@@ -160,11 +158,7 @@ class Open {
         hash_update($ctx, Utils::hex2bin($from->getLineOut()));
         $key = hash_final($ctx, true);
         $from->setDecryptionKey($key);
-        print "DK: ".Utils::bin2hex($key)."\n";
 
-        print $from;
-
-        print "\n";
         return $from;
     }
 
@@ -174,10 +168,10 @@ class Open {
         $to = new \StdClass();
 
         $to->rsaPubKey = $seed->getPublicKey();
-        $to->hash = $seed->getHash();
+        $to->hash = $seed->getName();
         $to->line = Utils::bin2hex(openssl_random_pseudo_bytes(16));
 
-        $to_node = new Node(new Hash($to->hash));
+        $to_node = new Node($to->hash);
         $to_node->setLineOut($to->line);
 
         // 1. Verify public key
