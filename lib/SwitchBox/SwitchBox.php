@@ -34,7 +34,7 @@ class SwitchBox {
 
         // Create self node based on keypair
         $this->keypair = $keypair;
-        $hash = hash('sha256', Utils::convertPemToDer($this->getKeyPair()->getPublicKey()));
+        $hash = hash('sha256', $this->getKeyPair()->getPublicKey(KeyPair::FORMAT_DER));
         $this->self_node = new Node($hash);
 
         // Setup UDP mesh socket
@@ -42,7 +42,7 @@ class SwitchBox {
         socket_set_nonblock($this->sock);
         foreach ($seeds as $seed) {
             if (! $seed instanceof Seed) continue;
-            $this->txqueue->enqueue_packet($seed->getHost(), $seed->getPort(), Open::generate($this, $seed, null));
+            $this->txqueue->enqueue_packet($seed, Open::generate($this, $seed, null));
         }
 
     }
@@ -73,6 +73,10 @@ class SwitchBox {
     }
 
 
+    public function tx(Node $to, Packet $packet) {
+        $this->txqueue->enqueue_packet($to, $packet->encode());
+    }
+
 
     public function __toString() {
         return "SwitchBox[".$this->getSelfNode()->getName()."]";
@@ -80,7 +84,7 @@ class SwitchBox {
 
     public function loop() {
         while (true) {
-            print "loop() Checking TX queue...";
+            print "loop() Checking TX queue...\n";
             if (! $this->txqueue->isEmpty()) {
                 print count($this->txqueue)." packets queued.\n";
 
@@ -92,9 +96,6 @@ class SwitchBox {
                     $bin_packet = $bin_packet->encode();
                     socket_sendto($this->sock, $bin_packet, strlen($bin_packet), 0, $item['ip'], $item['port']);
                 }
-
-            } else {
-                print "empty\n";
             }
 
             print "loop() select(): ";

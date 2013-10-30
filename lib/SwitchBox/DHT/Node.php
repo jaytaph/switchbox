@@ -3,17 +3,13 @@
 namespace SwitchBox\DHT;
 
 use phpecc\PublicKey;
+use SwitchBox\Stream;
 
-class Node {
-    protected $name;                        // Hex string of hash / nodename
-
+class Node extends Seed {
     protected $open_packet_sent = false;    // True when an open packet has been sent to this node
 
     protected $open_at = 0;                 // Time open packet has been send
     protected $recv_at;                     // Time received (last) packet
-    protected $pubkey;                      // Public key of the node
-    protected $ip;                          // IP that connected
-    protected $port;                        // Port that connected
     protected $line_in;                     // Line in string
     protected $line_out;                    // Line out string
 
