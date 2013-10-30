@@ -8,16 +8,16 @@ use phpecc\Point;
 use phpecc\PrivateKey;
 use phpecc\PublicKey;
 use phpecc\Utilities\Gmp;
-use SwitchBox\DHT\Hash;
 use SwitchBox\DHT\Node;
 use SwitchBox\Packet;
-use SwitchBox\Seed;
 use SwitchBox\SwitchBox;
 use SwitchBox\Utils;
 
 class Open {
 
     /**
+     * Process an open packet
+     *
      * @param SwitchBox $switchbox
      * @param Packet $packet
      * @return null|Node
@@ -52,7 +52,7 @@ class Open {
 
         $innerPacket = Packet::decode($switchbox, $body);
 
-        $my_node = hash('sha256', Utils::convertPemToDer($switchbox->getKeyPair()->getPublicKey()));
+        $my_node = hash('sha256', $switchbox->getKeyPair()->getPublicKey(KeyPair::FORMAT_DER));
         $innerHeader = $innerPacket->getHeader();
         if ($innerHeader['to'] != $my_node) {
             throw new \DomainException("open for wrong hashname");
@@ -69,7 +69,7 @@ class Open {
         $hash = hash('sha256', $innerPacket->getBody(), true);
 
         $key = $innerPacket->getBody();
-        $res = openssl_pkey_get_public(Utils::convertDerToPem($key));
+        $res = openssl_pkey_get_public(KeyPair::convertDerToPem($key));
         $details = openssl_pkey_get_details($res);
         if (! $details) {
             throw new \DomainException("not a valid public key!");
@@ -161,12 +161,21 @@ class Open {
     }
 
 
-    static function generate(SwitchBox $switchbox, Seed $seed, $family = null) {
+    /**
+     * Generate a new open packet to the given node. Optionally tag with $family
+     *
+     * @param SwitchBox $switchbox
+     * @param Node $node
+     * @param null $family
+     * @return Packet
+     * @throws \DomainException
+     */
+    static function generate(SwitchBox $switchbox, Node $node, $family = null) {
         // 0. Setup some stuff
         $to = new \StdClass();
 
-        $to->rsaPubKey = $seed->getPublicKey();
-        $to->hash = $seed->getName();
+        $to->rsaPubKey = $node->getPublicKey();
+        $to->hash = $node->getName();
         $to->line = Utils::bin2hex(openssl_random_pseudo_bytes(16));
 
         $to_node = new Node($to->hash);
@@ -219,7 +228,7 @@ class Open {
             $header['family'] = $family;
         }
 
-        $inner_packet = new Packet($switchbox, $header, Utils::convertPemToDer($switchbox->getKeyPair()->getPublicKey()));
+        $inner_packet = new Packet($switchbox, $header, $switchbox->getKeyPair()->getPublicKey(KeyPair::FORMAT_DER));
 
         // 6. Encrypt inner packet
         $blob = $inner_packet->encode();
