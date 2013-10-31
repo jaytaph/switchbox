@@ -5,6 +5,7 @@ namespace SwitchBox;
 use SwitchBox\DHT\Mesh;
 use SwitchBox\DHT\Hash;
 use SwitchBox\DHT\Node;
+use SwitchBox\DHT\Seed;
 use SwitchBox\Packet\Line;
 use SwitchBox\Packet\Open;
 
@@ -26,6 +27,7 @@ class SwitchBox {
     /** @var TxQueue */
     protected $txqueue;
 
+
     public function __construct(array $seeds, KeyPair $keypair) {
         // Setup generic structures
         $this->mesh = new Mesh($this);
@@ -33,15 +35,16 @@ class SwitchBox {
 
         // Create self node based on keypair
         $this->keypair = $keypair;
-        $hash = hash('sha256', Utils::convertPemToDer($this->getKeyPair()->getPublicKey()));
-        $this->self_node = new Node(new Hash($hash));
+        $hash = Node::generateNodeName($keypair->getPublicKey());
+        $this->self_node = new Node($hash);
+        $this->mesh->addNode($this->self_node);
 
         // Setup UDP mesh socket
         $this->sock = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
         socket_set_nonblock($this->sock);
         foreach ($seeds as $seed) {
             if (! $seed instanceof Seed) continue;
-            $this->txqueue->enqueue_packet($seed->getHost(), $seed->getPort(), Open::generate($this, $seed, null));
+            $this->txqueue->enqueue_packet($seed, Open::generate($this, $seed, null));
         }
 
     }
@@ -72,14 +75,18 @@ class SwitchBox {
     }
 
 
+    public function tx(Node $to, Packet $packet) {
+        $this->txqueue->enqueue_packet($to, $packet->encode());
+    }
+
 
     public function __toString() {
-        return "SwitchBox[".$this->getSelfNode()->getHash()."]";
+        return "SwitchBox[".$this->getSelfNode()->getName()."]";
     }
 
     public function loop() {
         while (true) {
-            print "loop() Checking TX queue...";
+            print "loop() Checking TX queue...\n";
             if (! $this->txqueue->isEmpty()) {
                 print count($this->txqueue)." packets queued.\n";
 
@@ -91,9 +98,6 @@ class SwitchBox {
                     $bin_packet = $bin_packet->encode();
                     socket_sendto($this->sock, $bin_packet, strlen($bin_packet), 0, $item['ip'], $item['port']);
                 }
-
-            } else {
-                print "empty\n";
             }
 
             print "loop() select(): ";
@@ -126,19 +130,16 @@ class SwitchBox {
                 // @TODO: Packet should already have it's processor:  $packet->process($this, $buf);
 
                 if ($packet->getType() == Packet::TYPE_OPEN) {
-                    // Check packet type, decode correct packet type...
-                    /** @var $node DHT\Node */
                     $node = Open::process($this, $packet);
 
                     // Try and do a seek to ourselves
-                    $packet = Line::generate($this, $node, Line\Seek::generate($this, $node));
-                    $this->txqueue->enqueue_packet($node->getIp(), $node->getPort(), $packet);
+                    $stream = new Stream($this, $node, "seek", new Line\Seek());
+                    $stream->send(Line\Seek::generate($stream, $this->getSelfNode()->getName()));
 
                     continue;
                 }
                 if ($packet->getType() == Packet::TYPE_LINE) {
                     Line::process($this, $packet);
-
                     continue;
                 }
 
@@ -146,7 +147,25 @@ class SwitchBox {
                 continue;
             }
         }
-
     }
+
+    /**
+     * @return \SwitchBox\TxQueue
+     */
+    public function getTxQueue()
+    {
+        return $this->txqueue;
+    }
+
+
+
+    // Metrics:
+    //      Number of packets in
+    //      Number of packets out
+    //      Number of bytes in
+    //      Number of bytes out
+    //      Number of misses
+    //      Number of known nodes
+
 
 }

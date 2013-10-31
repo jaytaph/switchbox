@@ -3,18 +3,13 @@
 namespace SwitchBox\DHT;
 
 use phpecc\PublicKey;
+use SwitchBox\Stream;
 
-class Node {
-    /** @var Hash */
-    protected $hash;
-
+class Node extends Seed {
     protected $open_packet_sent = false;    // True when an open packet has been sent to this node
 
     protected $open_at = 0;                 // Time open packet has been send
     protected $recv_at;                     // Time received (last) packet
-    protected $pubkey;                      // Public key of the node
-    protected $ip;                          // IP that connected
-    protected $port;                        // Port that connected
     protected $line_in;                     // Line in string
     protected $line_out;                    // Line out string
 
@@ -26,11 +21,25 @@ class Node {
 
     protected $buckets = array();           // @TODO needed here?
     protected $bucket_idx = null;           // @TODO needed here?
+    protected $streams = array();           // Array of currently running streams for this node
 
 
-    function __construct(Hash $hash) {
-        $this->hash = $hash;
+    function __construct($name) {
+        $this->name = $name;
         $this->buckets = array();
+        $this->streams = array();
+    }
+
+    /**
+     * @return Stream|null
+     */
+    public function getStream($id)
+    {
+        return isset($this->streams[$id]) ? $this->streams[$id] : null;
+    }
+
+    function addStream(Stream $stream) {
+        $this->streams[$stream->getId()] = $stream;
     }
 
     /**
@@ -63,17 +72,17 @@ class Node {
         return $this->at;
     }
 
-    public function setHash(Hash $hash)
+    public function setName($name)
     {
-        $this->hash = $hash;
+        $this->name = $name;
     }
 
     /**
-     * @return Hash
+     * @return string
      */
-    public function getHash()
+    public function getName()
     {
-        return $this->hash;
+        return $this->name;
     }
 
     /**
@@ -241,7 +250,7 @@ class Node {
 
 
     function __toString() {
-        return $this->getIp().":".$this->getPort()."[".$this->getHash()."]";
+        return $this->getIp().":".$this->getPort()." [".$this->getName()."]";
     }
 
 }
