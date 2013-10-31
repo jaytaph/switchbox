@@ -5,6 +5,7 @@ namespace SwitchBox;
 use SwitchBox\DHT\Mesh;
 use SwitchBox\DHT\Hash;
 use SwitchBox\DHT\Node;
+use SwitchBox\DHT\Seed;
 use SwitchBox\Packet\Line;
 use SwitchBox\Packet\Open;
 
@@ -34,8 +35,9 @@ class SwitchBox {
 
         // Create self node based on keypair
         $this->keypair = $keypair;
-        $hash = hash('sha256', $this->getKeyPair()->getPublicKey(KeyPair::FORMAT_DER));
+        $hash = Node::generateNodeName($keypair->getPublicKey());
         $this->self_node = new Node($hash);
+        $this->mesh->addNode($this->self_node);
 
         // Setup UDP mesh socket
         $this->sock = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
@@ -128,19 +130,16 @@ class SwitchBox {
                 // @TODO: Packet should already have it's processor:  $packet->process($this, $buf);
 
                 if ($packet->getType() == Packet::TYPE_OPEN) {
-                    // Check packet type, decode correct packet type...
-                    /** @var $node DHT\Node */
                     $node = Open::process($this, $packet);
 
                     // Try and do a seek to ourselves
-                    $packet = Line::generate($this, $node, Line\Seek::generate($this, $node));
-                    $this->txqueue->enqueue_packet($node->getIp(), $node->getPort(), $packet);
+                    $stream = new Stream($this, $node, "seek", new Line\Seek());
+                    $stream->send(Line\Seek::generate($stream, $this->getSelfNode()->getName()));
 
                     continue;
                 }
                 if ($packet->getType() == Packet::TYPE_LINE) {
                     Line::process($this, $packet);
-
                     continue;
                 }
 
@@ -148,7 +147,25 @@ class SwitchBox {
                 continue;
             }
         }
-
     }
+
+    /**
+     * @return \SwitchBox\TxQueue
+     */
+    public function getTxQueue()
+    {
+        return $this->txqueue;
+    }
+
+
+
+    // Metrics:
+    //      Number of packets in
+    //      Number of packets out
+    //      Number of bytes in
+    //      Number of bytes out
+    //      Number of misses
+    //      Number of known nodes
+
 
 }

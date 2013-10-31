@@ -8,7 +8,9 @@ use phpecc\Point;
 use phpecc\PrivateKey;
 use phpecc\PublicKey;
 use phpecc\Utilities\Gmp;
+use SwitchBox\DHT\Host;
 use SwitchBox\DHT\Node;
+use SwitchBox\KeyPair;
 use SwitchBox\Packet;
 use SwitchBox\SwitchBox;
 use SwitchBox\Utils;
@@ -165,17 +167,17 @@ class Open {
      * Generate a new open packet to the given node. Optionally tag with $family
      *
      * @param SwitchBox $switchbox
-     * @param Node $node
+     * @param Host $host
      * @param null $family
      * @return Packet
      * @throws \DomainException
      */
-    static function generate(SwitchBox $switchbox, Node $node, $family = null) {
+    static function generate(SwitchBox $switchbox, Host $host, $family = null) {
         // 0. Setup some stuff
         $to = new \StdClass();
 
-        $to->rsaPubKey = $node->getPublicKey();
-        $to->hash = $node->getName();
+        $to->rsaPubKey = $host->getPublicKey();
+        $to->hash = $host->getName();
         $to->line = Utils::bin2hex(openssl_random_pseudo_bytes(16));
 
         $to_node = new Node($to->hash);

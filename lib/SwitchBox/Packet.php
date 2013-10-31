@@ -32,7 +32,7 @@ class Packet {
      * @param null $header
      * @param null $body
      */
-    function __construct(SwitchBox $switchbox, $header, $body) {
+    function __construct(Switchbox $switchbox, $header, $body) {
         $this->switchbox = $switchbox;
 
         $this->setHeader($header);
@@ -41,6 +41,7 @@ class Packet {
         $this->timestamp = time();
     }
 
+    // @TODO: A packet should not concern themselves on where they came from. But might link a packet to a stream/node
     function setFrom($ip, $port) {
         $this->from_ip = $ip;
         $this->from_port = $port;
@@ -75,7 +76,7 @@ class Packet {
         switch ($this->header['type']) {
             case "open" :
                 $this->type = self::TYPE_OPEN;
-//                $this->processor = new Open($this->switchbox, $this);
+//                $this->processor = new Line($this->switchbox, $this);
                 break;
             case "line" :
                 $this->type = self::TYPE_LINE;

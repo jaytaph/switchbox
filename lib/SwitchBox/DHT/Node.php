@@ -21,11 +21,25 @@ class Node extends Seed {
 
     protected $buckets = array();           // @TODO needed here?
     protected $bucket_idx = null;           // @TODO needed here?
+    protected $streams = array();           // Array of currently running streams for this node
 
 
     function __construct($name) {
         $this->name = $name;
         $this->buckets = array();
+        $this->streams = array();
+    }
+
+    /**
+     * @return Stream|null
+     */
+    public function getStream($id)
+    {
+        return isset($this->streams[$id]) ? $this->streams[$id] : null;
+    }
+
+    function addStream(Stream $stream) {
+        $this->streams[$stream->getId()] = $stream;
     }
 
     /**
