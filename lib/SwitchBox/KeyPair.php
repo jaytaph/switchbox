@@ -18,11 +18,11 @@ class KeyPair {
     /**
      * @param $filename
      */
-    function __construct($filename, $generate)
+    function __construct($filename, $generate = true)
     {
         // Generate new keypair if we can't find one
         if (! file_exists($filename) && $generate) {
-            $json = self::generate("seed.json");
+            $json = json_decode(self::generate($filename));
         } else {
             $json = json_decode(file_get_contents($filename));
         }
@@ -35,7 +35,7 @@ class KeyPair {
     /**
      * @param $filename
      */
-    static function generate($filename) {
+    static function generate($filename, $bits = 2048) {
         $res = openssl_pkey_new(array(
             "digest_algo" => "sha512",
             "private_key_bits" => $bits,

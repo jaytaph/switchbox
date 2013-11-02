@@ -69,6 +69,16 @@ class Host {
     }
 
     /**
+     * @param mixed $public_key
+     */
+    public function setPublicKey($public_key)
+    {
+        $this->public_key = $public_key;
+    }
+
+
+
+    /**
      * @return string
      */
     function __toString()

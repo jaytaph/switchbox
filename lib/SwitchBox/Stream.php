@@ -41,6 +41,7 @@ class Stream {
 
     function __construct(SwitchBox $switchbox, Node $to, $type, Line\iLineProcessor $processor, $id = null) {
         $this->id = $id ? $id : Utils::bin2hex(openssl_random_pseudo_bytes(16));
+        print "New Stream ID: ".$this->id."\n";
         $this->to = $to;
         $this->switchbox = $switchbox;
 
@@ -191,7 +192,6 @@ class Stream {
     }
 
     function send(Packet $inner_packet) {
-        print "\n\n\n\nSending stream packet.....\n\n\n";
         $packet = Line::generate($this->getSwitchBox(), $this->getTo(), $inner_packet);
         $this->getSwitchBox()->getTxQueue()->enqueue_packet($this->getTo(), $packet);
     }

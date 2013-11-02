@@ -42,21 +42,6 @@ class Node extends Seed {
         $this->streams[$stream->getId()] = $stream;
     }
 
-    /**
-     * @param mixed $pubkey
-     */
-    public function setPubkey($pubkey)
-    {
-        $this->pubkey = $pubkey;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getPubkey()
-    {
-        return $this->pubkey;
-    }
 
     public function setOpenAt($timestamp)
     {
