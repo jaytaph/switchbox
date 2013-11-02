@@ -31,6 +31,10 @@ class Mesh {
         return isset($this->nodes[$name]);
     }
 
+    function getNodes() {
+        return $this->nodes;
+    }
+
     /**
      * @param $name
      * @return null|Node

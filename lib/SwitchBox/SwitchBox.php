@@ -2,6 +2,7 @@
 
 namespace SwitchBox;
 
+use SwitchBox\DHT\Host;
 use SwitchBox\DHT\Mesh;
 use SwitchBox\DHT\Hash;
 use SwitchBox\DHT\Node;
@@ -37,6 +38,8 @@ class SwitchBox {
         $this->keypair = $keypair;
         $hash = Node::generateNodeName($keypair->getPublicKey());
         $this->self_node = new Node($hash);
+        $this->self_node->setIp(0);
+        $this->self_node->setPort(0);
         $this->mesh->addNode($this->self_node);
 
         // Setup UDP mesh socket
@@ -86,7 +89,7 @@ class SwitchBox {
 
     public function loop() {
         while (true) {
-            print "loop() Checking TX queue...\n";
+            print "loop(".$this->loop.") Checking TX queue...\n";
             if (! $this->txqueue->isEmpty()) {
                 print count($this->txqueue)." packets queued.\n";
 

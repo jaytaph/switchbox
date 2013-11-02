@@ -10,22 +10,31 @@ use SwitchBox\SwitchBox;
 class Seek implements iLineProcessor {
 
     static function process(SwitchBox $switchbox, Node $node, Packet $packet) {
-        print "PROCESSING SEEK!!!!\n";
+        print "**** PROCESSING SEEK: \n";
         $header = $packet->getHeader();
 
         if (! isset($header['see'])) return;
+        print_r($header['see']);
 
         foreach ($header['see'] as $see) {
             list($hash, $ip, $port) = explode(',', $see, 3);
-            var_dump($hash);
 
             $node = $switchbox->getMesh()->getNode($hash);
-            if (!$node) {
-                print "Unknown node: ".$hash."\n";
-                // We need to open a connection to these nodes... or something??
+            if ($node) {
+                // This node is already present. But we might be able to update IP and PORT
+                if ($node->getIp() != $ip) {
+                    print "*** Changing IP from ".$node->getIp().":".$node->getPort()." to ".$ip.":".$port."\n";
+                    $node->setIp($ip);
+                    $node->setPort($port);
+                }
             } else {
-                print "We know about: ".$node->getName()."\n";
+                $node = new Node($hash);
+                $node->setIp($ip);
+                $node->setPort($port);
             }
+
+            $stream = new Stream($switchbox, $node, "peer", new Peer());
+            $stream->send(Peer::generate($stream, $hash));
         }
     }
 

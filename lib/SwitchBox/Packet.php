@@ -38,6 +38,9 @@ class Packet {
         $this->setHeader($header);
         $this->setBody($body);
 
+        print_r($header);
+        //print_r($body);
+
         $this->timestamp = time();
     }
 

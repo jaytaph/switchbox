@@ -104,6 +104,7 @@ class Open {
             // @TODO: add to mesh?? How about our line and secrets?
             die ("No idea who '".Utils::bin2hex($hash)."' is.. :(\n");
             //$from = new Node(new Hash(bin2hex($hash)));
+            $from = new Node($hash);
             print "FROM: ";
             print_r($from);
         }
@@ -114,7 +115,7 @@ class Open {
 
         // Update values
         $from->setOpenAt($innerHeader['at']);
-        $from->setPubKey($key);
+        $from->setPublicKey($key);
         $from->setIp($packet->getFromIp());
         $from->setPort($packet->getFromPort());
         $from->setRecvAt(time());

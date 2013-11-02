@@ -4,6 +4,8 @@ namespace SwitchBox\Packet;
 
 use SwitchBox\DHT\Node;
 use SwitchBox\Packet;
+use SwitchBox\Packet\Line\Connect;
+use SwitchBox\Stream;
 use SwitchBox\SwitchBox;
 use SwitchBox\Utils;
 
@@ -39,11 +41,22 @@ class Line {
         $inner_packet = $cipher->decrypt($packet->getBody());
 
         $inner_packet = Packet::decode($switchbox, $inner_packet);
-        print_r($inner_packet->getHeader());
-        print_r($inner_packet->getBody());
+//        print_r($inner_packet->getHeader());
+//        print_r($inner_packet->getBody());
 
         $inner_header = $inner_packet->getHeader();
         $stream = $from->getStream($inner_header['c']);
+        if (! $stream) {
+            // Stream hasn't been opened yet. Let's create a stream
+            switch ($inner_header['type']) {
+                case "connect" :
+                    $stream = new Stream($switchbox, $from, "connect", new Connect(), $inner_header['c']);
+                    break;
+                default :
+                    throw new \RuntimeException("Unknown incoming type in line");
+                    break;
+            }
+        }
         $stream->process($inner_packet);
     }
 
