@@ -20,6 +20,8 @@ class Peer implements iLineProcessor {
         $port = $switchbox->getSelfNode()->getPort();
         $pub_key = $switchbox->getKeyPair()->getPublicKey(KeyPair::FORMAT_DER);
 
+//        $host = new Host($ip, $port, $pub_key);
+//        $switchbox->getMesh()->addHost($host);
 //        // we should send an open packet, just like a normal seed
 //        $hash = Host::generateNodeName($pub_key);
 //        $node = $switchbox->getMesh()->getNode($hash);
@@ -29,8 +31,8 @@ class Peer implements iLineProcessor {
 //            $switchbox->getTxQueue()->enqueue_packet($host, Open::generate($switchbox, $host, null));
 //        }
 
-        $stream = new Stream($switchbox, $node, "connect", new Connect());
-        $stream->send(Connect::generate($stream, $ip, $port, $pub_key));
+//        $stream = new Stream($switchbox, $node, "connect", new Connect());
+//        $stream->send(Connect::generate($stream, $ip, $port, $pub_key));
     }
 
     static function generate(Stream $stream, $hash)
@@ -41,6 +43,7 @@ class Peer implements iLineProcessor {
             'peer' => $hash,
             'seq' => $stream->getNextSequence(),
             'ack' => $stream->getLastAck(),
+            'end' => 'true',
         );
 
         return new Packet($stream->getSwitchBox(), $header, null);

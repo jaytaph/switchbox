@@ -12,25 +12,34 @@ use SwitchBox\SwitchBox;
 
 class Connect implements iLineProcessor {
 
+    // We got a incoming connection request. Let's try and connect to there
+
     static function process(SwitchBox $switchbox, Node $node, Packet $packet) {
-        print "PROCESSING CONNECT!!!!\n";
+        print "PROCESSING CONNECT REQUEST!!!!\n";
         $header = $packet->getHeader();
+        if (! isset($header['ip'])) return;
+        print_r($header);
 
         $pub_key = KeyPair::convertDerToPem($packet->getBody());
-        print_r($header);
-        print_r($pub_key);
-
-        // we should send an open packet, just like a normal seed
         $hash = Host::generateNodeName($pub_key);
-        $node = $switchbox->getMesh()->getNode($hash);
-        if (! $node) {
-            // We don't know about this node. Let's connect to it...
-            print "Unknown node: ".$hash."\n";
-            $host = new Host($ip, $port, $pub_key);
-            $switchbox->getTxQueue()->enqueue_packet($host, Open::generate($switchbox, $host, null));
-        } else {
-            print "We know about: ".$node->getName()."\n";
+
+        // See if this destination is already someone we know
+        $destination = $switchbox->getMesh()->getNode($hash);
+        if (! $destination) {
+            $destination = new Host($header['ip'], $header['port'], $pub_key);
         }
+
+        // Set destination information
+        $destination->setIp($header['ip']);
+        $destination->setPort($header['port']);
+        $destination->setPublicKey($pub_key);
+
+        if ($destination->isConnected()) {
+            print "We are connected to: ".(string)$destination.", no need to connect again\n";
+            return;
+        }
+
+        $switchbox->getTxQueue()->enqueue_packet($destination, Open::generate($switchbox, $destination, null));
     }
 
     static function generate(Stream $stream, $ip, $port, $pub_key)
@@ -39,9 +48,10 @@ class Connect implements iLineProcessor {
             'c' => $stream->getId(),
             'type' => 'connect',
             'ip' => $ip,
-            'port' => $port,
+            'port' => (int)$port,
             'seq' => $stream->getNextSequence(),
             'ack' => $stream->getLastAck(),
+            'end' => 'true',
         );
 
         return new Packet($stream->getSwitchBox(), $header, $pub_key);

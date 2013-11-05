@@ -5,6 +5,8 @@ namespace SwitchBox\Packet;
 use SwitchBox\DHT\Node;
 use SwitchBox\Packet;
 use SwitchBox\Packet\Line\Connect;
+use SwitchBox\Packet\Line\Peer;
+use SwitchBox\Packet\Line\Seek;
 use SwitchBox\Stream;
 use SwitchBox\SwitchBox;
 use SwitchBox\Utils;
@@ -31,7 +33,8 @@ class Line {
         // Find our node
         $from = $switchbox->getMesh()->findByLine($header['line']);
         if (! $from) {
-            throw new \DomainException("Cannot find matching node for line ".$header['line']);
+            print "Cannot find matching node for line ".$header['line'];
+            return;
         }
 
         // Decrypt line body with inner packet
@@ -41,8 +44,6 @@ class Line {
         $inner_packet = $cipher->decrypt($packet->getBody());
 
         $inner_packet = Packet::decode($switchbox, $inner_packet);
-//        print_r($inner_packet->getHeader());
-//        print_r($inner_packet->getBody());
 
         $inner_header = $inner_packet->getHeader();
         $stream = $from->getStream($inner_header['c']);
@@ -52,8 +53,14 @@ class Line {
                 case "connect" :
                     $stream = new Stream($switchbox, $from, "connect", new Connect(), $inner_header['c']);
                     break;
+//                case "peer" :
+//                    $stream = new Stream($switchbox, $from, "peer", new Peer(), $inner_header['c']);
+//                    break;
+//                case "seek" :
+//                    $stream = new Stream($switchbox, $from, "seek", new Seek(), $inner_header['c']);
+//                    break;
                 default :
-                    throw new \RuntimeException("Unknown incoming type in line");
+                    throw new \RuntimeException("Unknown incoming type in line: ".print_r($inner_header, true));
                     break;
             }
         }
@@ -73,7 +80,7 @@ class Line {
         $header = array(
             'type' => 'line',
             'line' => $to->getLineIn(),
-            'iv' => Utils::bin2hex(openssl_random_pseudo_bytes(16)),
+            'iv' => Utils::bin2hex(openssl_random_pseudo_bytes(16), 32),
         );
 
         $body = $inner_packet->encode();

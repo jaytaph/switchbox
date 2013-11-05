@@ -10,8 +10,8 @@ class Node extends Seed {
 
     protected $open_at = 0;                 // Time open packet has been send
     protected $recv_at;                     // Time received (last) packet
-    protected $line_in;                     // Line in string
-    protected $line_out;                    // Line out string
+    protected $line_in = null;              // Line in string
+    protected $line_out= null;              // Line out string
 
     /** @var PublicKey */
     protected $ecc;                         // Our generated ECC public key
@@ -132,6 +132,14 @@ class Node extends Seed {
     public function hasSentOpenPacket()
     {
         return $this->open_packet_sent;
+    }
+
+    public function isConnected() {
+        return $this->hasLine();
+    }
+
+    public function hasLine() {
+        return ($this->line_out && $this->line_in);
     }
 
     /**

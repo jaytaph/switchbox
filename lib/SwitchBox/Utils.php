@@ -4,8 +4,8 @@ namespace SwitchBox;
 
 class Utils {
 
-    static function bin2hex($str) {
-        return bin2hex($str);
+    static function bin2hex($str, $pad_length) {
+        return str_pad(bin2hex($str), $pad_length, "0", STR_PAD_RIGHT);
     }
 
     static function hex2bin($str) {

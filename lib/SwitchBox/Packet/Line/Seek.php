@@ -4,13 +4,13 @@ namespace SwitchBox\Packet\Line;
 
 use SwitchBox\DHT\Node;
 use SwitchBox\Packet;
+use SwitchBox\Packet\Ping;
 use SwitchBox\Stream;
 use SwitchBox\SwitchBox;
 
 class Seek implements iLineProcessor {
 
     static function process(SwitchBox $switchbox, Node $node, Packet $packet) {
-        print "**** PROCESSING SEEK: \n";
         $header = $packet->getHeader();
 
         if (! isset($header['see'])) return;
@@ -23,18 +23,18 @@ class Seek implements iLineProcessor {
             if ($node) {
                 // This node is already present. But we might be able to update IP and PORT
                 if ($node->getIp() != $ip) {
-                    print "*** Changing IP from ".$node->getIp().":".$node->getPort()." to ".$ip.":".$port."\n";
+                    print "*** Changing existing IP from ".$node->getIp().":".$node->getPort()." to ".$ip.":".$port."\n";
                     $node->setIp($ip);
                     $node->setPort($port);
                 }
             } else {
+                // Unknown node, just add it to our list
                 $node = new Node($hash);
                 $node->setIp($ip);
                 $node->setPort($port);
+                $switchbox->getMesh()->addNode($node);
             }
 
-            $stream = new Stream($switchbox, $node, "peer", new Peer());
-            $stream->send(Peer::generate($stream, $hash));
         }
     }
 

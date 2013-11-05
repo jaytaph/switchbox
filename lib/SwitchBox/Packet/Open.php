@@ -99,14 +99,25 @@ class Open {
             throw new \DomainException("invalid signature");
         }
 
-        $from = $switchbox->getMesh()->seen(Utils::bin2hex($hash));
+        $from = $switchbox->getMesh()->seen(Utils::bin2hex($hash, 64));
         if (! $from) {
-            // @TODO: add to mesh?? How about our line and secrets?
-            die ("No idea who '".Utils::bin2hex($hash)."' is.. :(\n");
-            //$from = new Node(new Hash(bin2hex($hash)));
             $from = new Node($hash);
-            print "FROM: ";
-            print_r($from);
+            $from->setPublicKey(KeyPair::convertDerToPem($key));
+        }
+
+        if (! $from->getEcc()) {
+            // 3. Create ECC keypair on NISTP256
+            $g = NISTcurve::generator_256();
+            $n = $g->getOrder();
+
+            $secret = Gmp::gmp_random($n);
+            $secretG = Point::mul($secret, $g);
+
+            $ecc = new \StdClass();
+            $ecc->pubkey = new PublicKey($g, $secretG);
+            $ecc->privkey = new PrivateKey($ecc->pubkey, $secret);
+
+            $from->setEcc($ecc);
         }
 
         if ($innerHeader['at'] < $from->getOpenAt()) {
@@ -121,21 +132,17 @@ class Open {
         $from->setRecvAt(time());
 
         if ($from->getLineIn() != null && $from->getLineIn() != $innerHeader['line']) {
+            print "No line in yet, or line-in differs. Resending open confirmation packet!\n";
+            // @TODO: can't we just set: isConnected(false)?
             $from->setSentOpenPacket(false);
         }
-
-//        if (! $from->hasSentOpenPacket()) {
-//            // @TODO: Sent an open packet to the NODE $from
-//            throw new \DomainException("We need to send an returning open packet to node.");
-//        }
-
 
         // we have an open line to the other side..
         $from->setLineIn($innerHeader['line']);
 
         // Derive secret key
         $curve = \phpecc\NISTcurve::generator_256();
-        $bob = \phpecc\PublicKey::decode($curve, Utils::bin2hex($decrypted));
+        $bob = \phpecc\PublicKey::decode($curve, Utils::bin2hex($decrypted, 130));
         /** @var $alice \phpecc\PrivateKey */
         $ecc = $from->getEcc();
         $alicePriv = $ecc->privkey;
@@ -179,7 +186,7 @@ class Open {
 
         $to->rsaPubKey = $host->getPublicKey();
         $to->hash = $host->getName();
-        $to->line = Utils::bin2hex(openssl_random_pseudo_bytes(16));
+        $to->line = Utils::bin2hex(openssl_random_pseudo_bytes(16), 32);
 
         $to_node = new Node($to->hash);
         $to_node->setLineOut($to->line);
@@ -197,7 +204,6 @@ class Open {
         if ($details['bits'] < 2048) {
             throw new \DomainException("public key must be at least 2048 bits");
         }
-
 
         // 2.create IV
         $iv = openssl_random_pseudo_bytes(16);
@@ -231,14 +237,14 @@ class Open {
             $header['family'] = $family;
         }
 
+        print_r($header);
         $inner_packet = new Packet($switchbox, $header, $switchbox->getKeyPair()->getPublicKey(KeyPair::FORMAT_DER));
 
         // 6. Encrypt inner packet
-        $blob = $inner_packet->encode();
         $cipher = new \Crypt_AES(CRYPT_AES_MODE_CTR);
         $cipher->setIv($iv);
         $cipher->setKey($hash);
-        $body = $cipher->encrypt($blob);
+        $body = $cipher->encrypt($inner_packet->encode());
 
 
         // 7. Create sig
@@ -264,10 +270,11 @@ class Open {
         $header = array(
             'type' => 'open',
             'open' => $open,
-            'iv' => Utils::bin2hex($iv),
+            'iv' => Utils::bin2hex($iv, 32),
             'sig' => $sig,
         );
-        return  new Packet($switchbox, $header, $body);
+        print_r($header);
+        return new Packet($switchbox, $header, $body);
     }
 
 }

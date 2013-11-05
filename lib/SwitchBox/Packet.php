@@ -11,9 +11,9 @@ use SwitchBox\Packet\Open;
 
 class Packet {
     /** @var array */
-    protected $header;
+    protected $header = array();
     /** @var string */
-    protected $body;
+    protected $body = null;
     /** @var  string    One of the TYPE_* constants */
     protected $type;
 //    protected $processor = null;
@@ -32,14 +32,11 @@ class Packet {
      * @param null $header
      * @param null $body
      */
-    function __construct(Switchbox $switchbox, $header, $body) {
+    function __construct(Switchbox $switchbox, $header = null, $body = null) {
         $this->switchbox = $switchbox;
 
-        $this->setHeader($header);
-        $this->setBody($body);
-
-        print_r($header);
-        //print_r($body);
+        if ($header !== null) $this->setHeader($header);
+        if ($body !== null) $this->setBody($body);
 
         $this->timestamp = time();
     }
@@ -108,6 +105,9 @@ class Packet {
      */
     static function decode(SwitchBox $switchbox, $bindata, $ip = null, $port = null) {
         $res1  = unpack('nlen/A*rest', $bindata);
+        if ($res1['len'] > strlen($res1['rest'])) {
+            $a = 1;
+        }
         $res2 = unpack('A'.$res1['len'].'json/A*body', $res1['rest']);
         $packet = new Packet($switchbox, json_decode($res2['json'], true), $res2['body']);
 

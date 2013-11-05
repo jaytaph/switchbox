@@ -10,7 +10,7 @@ class Mesh {
     function findByLine($line) {
         foreach ($this->nodes as $node) {
             /** @var $node Node */
-            print "Node: ".$node->getName()." Line: ".$node->getLineOut()."\n";
+            //print "Node: ".$node->getName()." Line: ".$node->getLineOut()."\n";
             if ($node->getLineOut() == $line) return $node;
         }
         return null;
@@ -23,6 +23,11 @@ class Mesh {
         $this->nodes[$node->getName()] = $node;
     }
 
+    function addHost(Host $host) {
+        print "*** Adding host to mesh: ".$host->getName()."\n";
+        $this->nodes[$host->getName()] = $host;
+    }
+
     /**
      * @param $name
      * @return bool
@@ -31,9 +36,15 @@ class Mesh {
         return isset($this->nodes[$name]);
     }
 
-    function getNodes() {
+    function getConnectedNodes() {
+        return array_filter($this->nodes, function ($e) { return $e->isConnected(); });
+        //return $this->nodes;
+    }
+
+    function getAllNodes() {
         return $this->nodes;
     }
+
 
     /**
      * @param $name

@@ -8,7 +8,7 @@ use SwitchBox\KeyPair;
 
 class Host {
     protected $name;               // Hex string of hash / nodename
-    protected $public_key;         // Public key of the node
+    protected $public_key;         // Public key of the node in PEM format
     protected $ip;                 // IP that connected
     protected $port;               // Port that connected
 

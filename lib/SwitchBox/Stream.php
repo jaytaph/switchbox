@@ -40,7 +40,7 @@ class Stream {
     const MAX_RETRIES       = 3;        // Maximum number of retries on a single package
 
     function __construct(SwitchBox $switchbox, Node $to, $type, Line\iLineProcessor $processor, $id = null) {
-        $this->id = $id ? $id : Utils::bin2hex(openssl_random_pseudo_bytes(16));
+        $this->id = $id ? $id : Utils::bin2hex(openssl_random_pseudo_bytes(16), 32);
         print "New Stream ID: ".$this->id."\n";
         $this->to = $to;
         $this->switchbox = $switchbox;
