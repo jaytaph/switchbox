@@ -23,11 +23,6 @@ class Mesh {
         $this->nodes[$node->getName()] = $node;
     }
 
-    function addHost(Host $host) {
-        print "*** Adding host to mesh: ".$host->getName()."\n";
-        $this->nodes[$host->getName()] = $host;
-    }
-
     /**
      * @param $name
      * @return bool

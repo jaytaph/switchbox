@@ -4,17 +4,17 @@
 
 namespace SwitchBox;
 
-use SwitchBox\DHT\Host;
+use SwitchBox\DHT\Node;
 
 class TxQueue extends \SplQueue {
 
     // This is why PHP needs method overloading... :(
-    function enqueue_packet(Host $host, Packet $packet) {
-        if ($host->getIp() == 0) {
+    function enqueue_packet(Node $node, Packet $packet) {
+        if ($node->getIp() == 0) {
             print "not sending to unknown IP\n";
             return;
         }
-        parent::enqueue(array('ip' => $host->getIp(), 'port' => $host->getPort(), 'packet' => $packet));
+        parent::enqueue(array('ip' => $node->getIp(), 'port' => $node->getPort(), 'packet' => $packet));
     }
 
 }

@@ -29,10 +29,7 @@ class Seek implements iLineProcessor {
                 }
             } else {
                 // Unknown node, just add it to our list
-                $node = new Node($hash);
-                $node->setIp($ip);
-                $node->setPort($port);
-                $switchbox->getMesh()->addNode($node);
+                $switchbox->getMesh()->addNode(new Node($ip, $port, $hash));
             }
 
         }

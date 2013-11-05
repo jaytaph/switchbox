@@ -2,7 +2,6 @@
 
 namespace SwitchBox\Packet\Line;
 
-use SwitchBox\DHT\Host;
 use SwitchBox\DHT\Node;
 use SwitchBox\KeyPair;
 use SwitchBox\Packet;
@@ -21,12 +20,12 @@ class Connect implements iLineProcessor {
         print_r($header);
 
         $pub_key = KeyPair::convertDerToPem($packet->getBody());
-        $hash = Host::generateNodeName($pub_key);
+        $hash = Node::generateNodeName($pub_key);
 
         // See if this destination is already someone we know
         $destination = $switchbox->getMesh()->getNode($hash);
         if (! $destination) {
-            $destination = new Host($header['ip'], $header['port'], $pub_key);
+            $destination = new Node($header['ip'], $header['port'], $pub_key);
         }
 
         // Set destination information

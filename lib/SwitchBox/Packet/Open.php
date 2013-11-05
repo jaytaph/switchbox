@@ -8,7 +8,6 @@ use phpecc\Point;
 use phpecc\PrivateKey;
 use phpecc\PublicKey;
 use phpecc\Utilities\Gmp;
-use SwitchBox\DHT\Host;
 use SwitchBox\DHT\Node;
 use SwitchBox\KeyPair;
 use SwitchBox\Packet;
@@ -129,7 +128,7 @@ class Open {
         $from->setPublicKey($key);
         $from->setIp($packet->getFromIp());
         $from->setPort($packet->getFromPort());
-        $from->setRecvAt(time());
+        $from->setOpenAt(time());
 
         if ($from->getLineIn() != null && $from->getLineIn() != $innerHeader['line']) {
             print "No line in yet, or line-in differs. Resending open confirmation packet!\n";
@@ -175,24 +174,18 @@ class Open {
      * Generate a new open packet to the given node. Optionally tag with $family
      *
      * @param SwitchBox $switchbox
-     * @param Host $host
+     * @param Node $node
      * @param null $family
      * @return Packet
      * @throws \DomainException
      */
-    static function generate(SwitchBox $switchbox, Host $host, $family = null) {
+    static function generate(SwitchBox $switchbox, Node $node, $family = null) {
         // 0. Setup some stuff
-        $to = new \StdClass();
 
-        $to->rsaPubKey = $host->getPublicKey();
-        $to->hash = $host->getName();
-        $to->line = Utils::bin2hex(openssl_random_pseudo_bytes(16), 32);
-
-        $to_node = new Node($to->hash);
-        $to_node->setLineOut($to->line);
+        $node->setLineOut(Utils::bin2hex(openssl_random_pseudo_bytes(16), 32));
 
         // 1. Verify public key
-        $res = openssl_pkey_get_public($to->rsaPubKey);
+        $res = openssl_pkey_get_public($node->getPublicKey());
         $details = openssl_pkey_get_details($res);
 
         if (! $details) {
@@ -220,8 +213,7 @@ class Open {
         $ecc->privkey = new PrivateKey($ecc->pubkey, $secret);
 
         // Add the node to the mesh, so we can find it
-        $to_node->setEcc($ecc);
-        $switchbox->getMesh()->addNode($to_node);
+        $node->setEcc($ecc);
 
 
         // 4. SHA256 hash ECC key
@@ -229,9 +221,9 @@ class Open {
 
         // 5. Form inner packet
         $header = array(
-            'to' => $to->hash,
+            'to' => $node->getName(),
             'at' => floor(microtime(true) * 1000),
-            'line' => $to->line,
+            'line' => $node->getLineOut(),
         );
         if ($family) {
             $header['family'] = $family;
@@ -252,7 +244,7 @@ class Open {
 
         $ctx = hash_init('sha256');
         hash_update($ctx, Utils::hex2bin($ecc->pubkey->encode()));
-        hash_update($ctx, Utils::hex2bin($to->line));
+        hash_update($ctx, Utils::hex2bin($node->getLineOut()));
         $aes_key = hash_final($ctx, true);
 
         $cipher = new \Crypt_AES(CRYPT_AES_MODE_CTR);
@@ -263,7 +255,7 @@ class Open {
         $sig = base64_encode($aes);
 
         // 8. Create open param
-        openssl_public_encrypt(Utils::hex2bin($ecc->pubkey->encode()), $open, $to->rsaPubKey, OPENSSL_PKCS1_OAEP_PADDING);
+        openssl_public_encrypt(Utils::hex2bin($ecc->pubkey->encode()), $open, $node->getPublicKey(), OPENSSL_PKCS1_OAEP_PADDING);
         $open = base64_encode($open);
 
         // 9. Form outer packet

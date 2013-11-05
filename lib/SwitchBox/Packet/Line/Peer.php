@@ -2,7 +2,6 @@
 
 namespace SwitchBox\Packet\Line;
 
-use SwitchBox\DHT\Host;
 use SwitchBox\DHT\Node;
 use SwitchBox\KeyPair;
 use SwitchBox\Packet;
@@ -13,12 +12,12 @@ use SwitchBox\SwitchBox;
 class Peer implements iLineProcessor {
 
     static function process(SwitchBox $switchbox, Node $node, Packet $packet) {
-        $header = $packet->getHeader();
-        $body = $packet->getBody();
-
-        $ip = $switchbox->getSelfNode()->getIp();
-        $port = $switchbox->getSelfNode()->getPort();
-        $pub_key = $switchbox->getKeyPair()->getPublicKey(KeyPair::FORMAT_DER);
+//        $header = $packet->getHeader();
+//        $body = $packet->getBody();
+//
+//        $ip = $switchbox->getSelfNode()->getIp();
+//        $port = $switchbox->getSelfNode()->getPort();
+//        $pub_key = $switchbox->getKeyPair()->getPublicKey(KeyPair::FORMAT_DER);
 
 //        $host = new Host($ip, $port, $pub_key);
 //        $switchbox->getMesh()->addHost($host);

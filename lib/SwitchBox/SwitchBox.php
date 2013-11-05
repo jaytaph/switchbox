@@ -2,7 +2,6 @@
 
 namespace SwitchBox;
 
-use SwitchBox\DHT\Host;
 use SwitchBox\DHT\Mesh;
 use SwitchBox\DHT\Hash;
 use SwitchBox\DHT\Node;
@@ -61,10 +60,7 @@ class SwitchBox {
 
         // Create self node based on keypair
         $this->keypair = $keypair;
-        $hash = Node::generateNodeName($keypair->getPublicKey());
-        $this->self_node = new Node($hash);
-        $this->self_node->setIp(0);     // We don't know our external IP/Port yet
-        $this->self_node->setPort(0);
+        $this->self_node = new Node(0, 0, $keypair->getPublicKey());
         $this->mesh->addNode($this->self_node);
 
         // Setup UDP mesh socket
@@ -72,8 +68,7 @@ class SwitchBox {
         socket_set_nonblock($this->sock);
         socket_bind($this->sock, 0, $udp_port);
         foreach ($seeds as $seed) {
-            if (! $seed instanceof Seed) continue;
-            $this->getMesh()->addHost($seed);
+            $this->getMesh()->addNode($seed);
 //            $this->txqueue->enqueue_packet($seed, Ping::generate($this));
             $this->txqueue->enqueue_packet($seed, Open::generate($this, $seed, null));
         }
