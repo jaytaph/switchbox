@@ -7,13 +7,12 @@
 namespace SwitchBox;
 
 use SwitchBox\Packet\Line;
-use SwitchBox\Packet\Open;
 
 class Packet {
     /** @var array */
-    protected $header;
+    protected $header = array();
     /** @var string */
-    protected $body;
+    protected $body = null;
     /** @var  string    One of the TYPE_* constants */
     protected $type;
 //    protected $processor = null;
@@ -29,17 +28,15 @@ class Packet {
     const TYPE_PING     = "ping";
 
     /**
+     * @param Switchbox $switchbox
      * @param null $header
      * @param null $body
      */
-    function __construct(Switchbox $switchbox, $header, $body) {
+    function __construct(Switchbox $switchbox, $header = null, $body = null) {
         $this->switchbox = $switchbox;
 
-        $this->setHeader($header);
-        $this->setBody($body);
-
-        print_r($header);
-        //print_r($body);
+        if ($header !== null) $this->setHeader($header);
+        if ($body !== null) $this->setBody($body);
 
         $this->timestamp = time();
     }
@@ -103,18 +100,23 @@ class Packet {
     }
 
     /**
+     * @param SwitchBox $switchbox
      * @param $bindata
+     * @param null $ip
+     * @param null $port
      * @return Packet
      */
     static function decode(SwitchBox $switchbox, $bindata, $ip = null, $port = null) {
-        $res1  = unpack('nlen/A*rest', $bindata);
-        $res2 = unpack('A'.$res1['len'].'json/A*body', $res1['rest']);
-        $packet = new Packet($switchbox, json_decode($res2['json'], true), $res2['body']);
+        $res = unpack('nlen', substr($bindata, 0, 2));
+        $json = substr($bindata, 2, $res['len']);
+        $body = substr($bindata, 2 + $res['len']);
+        $packet = new Packet($switchbox, json_decode($json, true), $body);
 
         // set packet's originating IP and port number
         if ($ip && $port) {
             $packet->setFrom($ip, $port);
         }
+
         return $packet;
     }
 

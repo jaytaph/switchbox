@@ -9,8 +9,14 @@ use SwitchBox\SwitchBox;
 
 class Seek implements iLineProcessor {
 
-    static function process(SwitchBox $switchbox, Node $node, Packet $packet) {
-        print "**** PROCESSING SEEK: \n";
+    static function inRequest(SwitchBox $switchbox, Node $node, Packet $packet)
+    {
+        print "PROCESSING SEEK IN REQUEST!!!!\n";
+    }
+
+    static function inResponse(SwitchBox $switchbox, Node $node, Packet $packet)
+    {
+        print "PROCESSING SEEK REQUEST!!!!\n";
         $header = $packet->getHeader();
 
         if (! isset($header['see'])) return;
@@ -23,31 +29,44 @@ class Seek implements iLineProcessor {
             if ($node) {
                 // This node is already present. But we might be able to update IP and PORT
                 if ($node->getIp() != $ip) {
-                    print "*** Changing IP from ".$node->getIp().":".$node->getPort()." to ".$ip.":".$port."\n";
+                    print "*** Changing existing IP from ".$node->getIp().":".$node->getPort()." to ".$ip.":".$port."\n";
                     $node->setIp($ip);
                     $node->setPort($port);
                 }
             } else {
-                $node = new Node($hash);
-                $node->setIp($ip);
-                $node->setPort($port);
+                // Unknown node, just add it to our list
+                $switchbox->getMesh()->addNode(new Node($ip, $port, null, $hash));
             }
 
-            $stream = new Stream($switchbox, $node, "peer", new Peer());
-            $stream->send(Peer::generate($stream, $hash));
         }
     }
 
-    static function generate(Stream $stream, $hash)
-    {
+    static function outResponse(Stream $stream, array $args) {
+        $hash = $args['hash'];
+
+        $nodes = array();
+        foreach ($stream->getSwitchBox()->getMesh()->getClosestForHash($hash, 5) as $node) {
+            /** @var $node Node */
+            $nodes[] = $node->getName();
+        }
+
         $header = array(
             'c' => $stream->getId(),
             'type' => 'seek',
-            'seek' => $hash,
+            'see' => $nodes,
             'seq' => $stream->getNextSequence(),
             'ack' => $stream->getLastAck(),
         );
 
+        print_r($header);
+        return new Packet($stream->getSwitchBox(), $header, null);
+    }
+
+    static function outRequest(Stream $stream, array $args)
+    {
+        $hash = $args['hash'];
+
+        $header = $stream->createOutStreamHeader('seek', array('seek' => $hash));
         return new Packet($stream->getSwitchBox(), $header, null);
     }
 
