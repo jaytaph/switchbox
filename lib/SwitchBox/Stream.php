@@ -7,6 +7,7 @@ namespace SwitchBox;
 
 use SwitchBox\DHT\Node;
 use SwitchBox\Packet\Line;
+use SwitchBox\Packet\Line\iLineProcessor;
 
 class Stream {
     /** @var string */
@@ -33,15 +34,12 @@ class Stream {
     /** @var iLineProcessor */
     protected $processor;               // Processor to process the packets in this stream
 
-    /** @var bool */
-    protected $ended = false;           // Stream has ended
-
     const MAX_BACKLOG       = 100;      // Maximum number of unacknowledged packets
     const MAX_RETRIES       = 3;        // Maximum number of retries on a single package
 
     function __construct(SwitchBox $switchbox, Node $to, $type, Line\iLineProcessor $processor, $id = null) {
         $this->id = $id ? $id : Utils::bin2hex(openssl_random_pseudo_bytes(16), 32);
-        print "New Stream ID: ".$this->id."\n";
+//        print "New Stream ID: ".$this->id."\n";
         $this->to = $to;
         $this->switchbox = $switchbox;
 
@@ -58,8 +56,7 @@ class Stream {
         $this->type = $type;
         $this->custom = (substr($type, 0, 1) == "_");
 
-        $this->ended = false;
-        $this->backbuffer = array();
+//        $this->backbuffer = array();
 
         // Add this new stream to the destination node
         $to->addStream($this);
@@ -95,22 +92,6 @@ class Stream {
 //            if ($k < $seq) unset($this->out_queue[$k]);
 //        }
     }
-
-
-//    function endStream($err = null) {
-//        $this->ended = true;
-//
-//        $header = array(
-//            'end' => true,
-//        );
-//        if ($err) {
-//            $header['err'] = $err;
-//        }
-//
-//        $packet = new Packet($this->switchbox, $header, null);
-//
-//        $this->switchbox->tx($this->to, $packet);
-//    }
 
 
     /**
@@ -159,6 +140,7 @@ class Stream {
      * Processes a packet that is part of a stream.
      */
     public function process(Packet $packet) {
+        print "Processing packet on stream ".$this->getId()."\n";
         $header = $packet->getHeader();
 
         // remote tells us that we are missing packets. Resend them again by placing them onto the tx-queue
@@ -183,17 +165,29 @@ class Stream {
             $this->acknowledgePackets($header['ack']);
         }
 
+        print "Actual process by ".get_class($this->getProcessor())."!\n";
+        $this->getProcessor()->inResponse($this->getSwitchBox(), $this->getTo(), $packet);
+
         // We can end the stream, and delete it and stuff
         if (isset($header['end']) && $header['end']) {
-            $this->ended = true;
+            $this->getTo()->removeStream($this);
         }
-
-        $this->getProcessor()->process($this->getSwitchBox(), $this->getTo(), $packet);
     }
 
     function send(Packet $inner_packet) {
         $packet = Line::generate($this->getSwitchBox(), $this->getTo(), $inner_packet);
         $this->getSwitchBox()->getTxQueue()->enqueue_packet($this->getTo(), $packet);
+    }
+
+    function createOutStreamHeader($type, $extra_headers, $end = true) {
+        $header = array(
+            'c' => $this->getId(),
+            'seq' => $this->getNextSequence(),
+            'ack' => $this->getLastAck(),
+        );
+        if ($type) $header['type'] = $type;
+        if ($end) $header['end'] = true;
+        return array_merge($header, $extra_headers);
     }
 
 }

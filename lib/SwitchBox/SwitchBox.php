@@ -2,12 +2,13 @@
 
 namespace SwitchBox;
 
+use SwitchBox\Admin\Commands\iCmd;
 use SwitchBox\DHT\Mesh;
-use SwitchBox\DHT\Hash;
 use SwitchBox\DHT\Node;
-use SwitchBox\DHT\Seed;
 use SwitchBox\Packet\Line;
 use SwitchBox\Packet\Open;
+use SwitchBox\Packet\Line\Peer as LinePeer;
+use SwitchBox\Packet\Line\Seek as LineSeek;
 use SwitchBox\Packet\Ping;
 
 // Make sure we are using GMP extension for AES libraries
@@ -60,7 +61,7 @@ class SwitchBox {
 
         // Create self node based on keypair
         $this->keypair = $keypair;
-        $this->self_node = new Node(0, 0, $keypair->getPublicKey());
+        $this->self_node = new Node(0, 0, $keypair->getPublicKey(), null);
         $this->mesh->addNode($this->self_node);
 
         // Setup UDP mesh socket
@@ -69,7 +70,6 @@ class SwitchBox {
         socket_bind($this->sock, 0, $udp_port);
         foreach ($seeds as $seed) {
             $this->getMesh()->addNode($seed);
-//            $this->txqueue->enqueue_packet($seed, Ping::generate($this));
             $this->txqueue->enqueue_packet($seed, Open::generate($this, $seed, null));
         }
 
@@ -107,9 +107,9 @@ class SwitchBox {
     }
 
 
-    public function tx(Node $to, Packet $packet) {
-        $this->txqueue->enqueue_packet($to, $packet->encode());
-    }
+//    public function tx(Node $to, Packet $packet) {
+//        $this->txqueue->enqueue_packet($to, $packet);
+//    }
 
 
     public function __toString() {
@@ -126,6 +126,7 @@ class SwitchBox {
 
                     print "Sending packet to ".$item['ip'].":".$item['port']."\n";
                     $bin_packet = $item['packet'];
+                    /** @var $bin_packet Packet */
                     $bin_packet = $bin_packet->encode();
                     socket_sendto($this->sock, $bin_packet, strlen($bin_packet), 0, $item['ip'], $item['port']);
                 }
@@ -140,6 +141,7 @@ class SwitchBox {
             }
             if ($ret == 0) {
                 // Timeout occurred
+                $this->doMaintenance();
                 continue;
             }
             print "\n";
@@ -162,7 +164,6 @@ class SwitchBox {
     }
 
     function _loop_tcp_packets_client($sock) {
-        print "Receiving info from TCP client socket...\n";
         $s = socket_read($sock, 2048);
         $s = trim($s);
 
@@ -173,6 +174,7 @@ class SwitchBox {
         $class = "\\SwitchBox\\Admin\\Commands\\".$cmd;
         if (class_exists($class)) {
             $cmd = new $class();
+            /** @var $cmd iCmd */
             $cmd->execute($this, $sock, $args);
         } else {
             $buf = "Unknown command ".$cmd.". Type 'help' for all available commands.\n";
@@ -187,7 +189,6 @@ class SwitchBox {
     }
 
     function _loop_tcp_packets($sock) {
-        print "Receiving info from TCP socket...\n";
         $sock = socket_accept($sock);
         $this->cmd_sock_clients[] = $sock;
 
@@ -199,12 +200,12 @@ class SwitchBox {
         socket_write($sock, $buf, strlen($buf));
     }
 
-    function _loop_udp_packets($sock) {
-        print "Receiving info from UDP socket...\n";
 
+    function _loop_udp_packets($sock) {
         $ip = ""; $port = 0;
         socket_recvfrom($sock, $buf, 2048, 0, $ip, $port);
-        print "loop() Connection from: $ip : $port\n";
+        $a = bin2hex($buf);
+        print "loop() Connection from: $ip : $port (".strlen($buf)."/".strlen($a)." bytes)\n";
 
         if ($ip == $this->getSelfNode()->getIp() && $port == $this->getSelfNode()->getPort()) {
             print "Loop() received data from self. Skipping!\n";
@@ -228,24 +229,27 @@ class SwitchBox {
 
         if ($packet->getType() == Packet::TYPE_OPEN) {
             $node = Open::process($this, $packet);
-            if ($node) {
-                $node->setIp($packet->getFromIp());
-                $node->setPort($packet->getFromPort());
-            }
 
-            if (! $node->isConnected()) {
+            if ($node->isConnected()) {
+                print ANSI_GREEN."Finalized connection with ".(string)$node."!!!!!".ANSI_RESET."\n";
+                print_r($node->getInfo());
+
+                // Try and do a seek to ourselves, this allows us to find our outside IP/PORT
+                $stream = new Stream($this, $node, "seek", new Line\Seek());
+                $stream->send(Line\Seek::outRequest($stream, array(
+                    'hash' => $this->getSelfNode()->getName(),
+                )));
+            } else {
                 print ANSI_YELLOW."Node ".(string)$node." is not yet connected. ".ANSI_RESET."\n";
                 $this->txqueue->enqueue_packet($node, Open::generate($this, $node, null));
-            } else {
-                print ANSI_GREEN."Finalized connection with ".(string)$node."!!!!!".ANSI_RESET."\n";
+//                if (empty($node->getLineIn()) || $node->getLineIn() != $innerHeader['line']) {
+//                    print ANSI_RED . "Intermediate Info....\n";
+//                    print_r($node->getInfo());
+//                    print ANSI_RESET;
+//
+//                    $switchbox->getTxQueue()->enqueue_packet($node, Open::generate($switchbox, $node, null));
+//                }
             }
-
-//            // A new connection, let's try and seek ourselves back
-//            $this->getTxQueue()->enqueue_packet($node, Ping::generate($this));
-
-            // Try and do a seek to ourselves, this allows us to find our outside IP/PORT
-            $stream = new Stream($this, $node, "seek", new Line\Seek());
-            $stream->send(Line\Seek::generate($stream, $this->getSelfNode()->getName()));
 
             return;
         }
@@ -270,14 +274,63 @@ class SwitchBox {
     }
 
 
+    public function doMaintenance() {
+        print ANSI_CYAN . "*** Maintenance Start". ANSI_RESET . "\n";
+        $this->_seekNodes();
+        $this->_connectToNodes();
+        print ANSI_CYAN . "*** Maintenance End". ANSI_RESET . "\n";
+    }
 
-    // Metrics:
-    //      Number of packets in
-    //      Number of packets out
-    //      Number of bytes in
-    //      Number of bytes out
-    //      Number of misses
-    //      Number of known nodes
+    protected function _seekNodes() {
+        $hashes = array();
+        foreach ($this->getMesh()->getAllNodes() as $node) {
+            /** @var $node Node */
+            $hashes[] = $node->getName();
+        }
+
+        foreach ($hashes as $hash) {
+            foreach ($this->getMesh()->getClosestForHash($hash) as $node) {
+                /** @var $node Node */
+
+                $stream = new Stream($this, $node, "seek", new LineSeek());
+                $stream->send(LineSeek::outRequest($stream, array(
+                    'hash' => $hash,
+                )));
+            }
+        }
+
+
+    }
+
+
+    protected function _connectToNodes() {
+        // Find all nodes that aren't connected yet
+        $nodes = array();
+        foreach ($this->getMesh()->getAllNodes() as $node) {
+            /** @var $node Node */
+            if ($node->isConnected()) continue;
+            if ($node->getName() == $this->getSelfNode()->getName()) continue;
+            $nodes[] = $node;
+        }
+
+        foreach ($nodes as $node) {
+            // Send out a ping packet, so they might punch through our NAT (if any)
+            $this->getTxQueue()->enqueue_packet($node, Ping::generate($this));
+
+            // Ask (all!??) nodes to let destination connect to use
+            foreach ($this->getMesh()->getConnectedNodes() as $seed) {
+                /** @var $seed Node */
+
+                // Don't ask ourselves.
+                if ($seed->getName() == $this->getSelfNode()->getName()) continue;
+
+                $stream = new Stream($this, $seed, "peer", new LinePeer());
+                $stream->send(LinePeer::outRequest($stream, array(
+                    'hash' => $node->getName(),
+                )));
+            }
+        }
+    }
 
 
 }

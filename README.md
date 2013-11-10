@@ -25,7 +25,7 @@ Installation
        
         php app.php
 
-
-
 On initial run, it will create a new seed.json file in your project root. This will
 be your public and private keys, and your nodename.
+
+You can telnet to TCP port 42424 for an admin interface to control the application.

@@ -32,22 +32,55 @@ class Mesh {
     }
 
     function getConnectedNodes() {
-        return array_filter($this->nodes, function ($e) { return $e->isConnected(); });
-        //return $this->nodes;
+        return array_filter($this->nodes, function ($e) { /** @var $e Node */ return $e->isConnected(); });
+    }
+
+    function getClosestForHash($hash, $limit = 3) {
+        return array_slice($this->getOrderedNodes($hash), 0, $limit);
     }
 
     function getAllNodes() {
         return $this->nodes;
     }
 
+    function getOrderedNodes($hash = null) {
+        $pq = new \SplPriorityQueue();
+
+        if (is_string($hash)) {
+            $hash = new Hash($hash);
+        }
+
+        foreach ($this->getAllNodes() as $node) {
+            $pq->insert($node, $node->getHash()->distance($hash));
+        }
+
+        return array_reverse(iterator_to_array($pq));
+    }
+
 
     /**
      * @param $name
+     * @param bool $return_one_only
      * @return null|Node
      */
-    function getNode($name) {
-        if ($this->nodeExists($name)) return $this->nodes[$name];
-        return null;
+    function getNode($name, $return_one_only = true) {
+        // Looking for a full name. Just find
+        if (strlen($name) == 64) {
+            if ($this->nodeExists($name)) return $this->nodes[$name];
+            return null;
+        }
+
+        // Find a collection of nodes that STARTS with the name
+        $matched_nodes = array_filter($this->nodes, function ($e) use ($name) {
+            /** @var $e Node */
+            return strpos($e->getName(), $name) === 0;
+        });
+
+        // If only one node matches, we can safely return that node
+        if (count($matched_nodes) == 1) return array_shift($matched_nodes);
+
+        // There is more than one node that matches. See if we like to return the whole collection
+        return ($return_one_only) ? null : $matched_nodes;
     }
 
     /**
@@ -58,13 +91,12 @@ class Mesh {
      * @param bool $force
      */
     function bucketize(Node $self, Node $other, $force = false) {
-        if (! $force && ! $other->getBucket()) return;
-
-        $hash_self = new Hash($self->getName());
-        $hash_other = new Hash($other->getName());
-        $bucketNr = $hash_self->distance($hash_other);
-        $self->addToBucket($bucketNr, $other);
-
+//        if (! $force && ! $other->getBucket()) return;
+//
+//        $hash_self = new Hash($self->getName());
+//        $hash_other = new Hash($other->getName());
+//        $bucketNr = $hash_self->distance($hash_other);
+//        $self->addToBucket($bucketNr, $other);
     }
 
     /**

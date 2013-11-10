@@ -3,18 +3,31 @@
 namespace SwitchBox\Packet\Line;
 
 use SwitchBox\DHT\Node;
-use SwitchBox\KeyPair;
 use SwitchBox\Packet;
-use SwitchBox\Packet\Open;
 use SwitchBox\Stream;
 use SwitchBox\SwitchBox;
 
 class Peer implements iLineProcessor {
 
-    static function process(SwitchBox $switchbox, Node $node, Packet $packet) {
-//        $header = $packet->getHeader();
-//        $body = $packet->getBody();
-//
+    static function inRequest(SwitchBox $switchbox, Node $node, Packet $packet) {
+        print "PEER INREQUEST\n";
+        $header = $packet->getHeader();
+        $body = $packet->getBody();
+        print_r($header);
+        print_r($body);
+
+        // Got a peer request. Do a middle-man connection
+    }
+
+    static function inResponse(SwitchBox $switchbox, Node $node, Packet $packet) {
+        print "PEER INRESPONSE\n";
+        $header = $packet->getHeader();
+        $body = $packet->getBody();
+        print_r($header);
+        print_r($body);
+
+        // Nothing to do.. the response is just an ack
+
 //        $ip = $switchbox->getSelfNode()->getIp();
 //        $port = $switchbox->getSelfNode()->getPort();
 //        $pub_key = $switchbox->getKeyPair()->getPublicKey(KeyPair::FORMAT_DER);
@@ -34,17 +47,22 @@ class Peer implements iLineProcessor {
 //        $stream->send(Connect::generate($stream, $ip, $port, $pub_key));
     }
 
-    static function generate(Stream $stream, $hash)
+    static function outResponse(Stream $stream, array $args)
     {
-        $header = array(
-            'c' => $stream->getId(),
-            'type' => 'peer',
-            'peer' => $hash,
-            'seq' => $stream->getNextSequence(),
-            'ack' => $stream->getLastAck(),
-            'end' => 'true',
-        );
+        $ip = $args['ip'];
+        $port = $args['port'];
+        $pub_key = $args['pub_key'];
 
+        print "outResponse Connect\n";
+        $header = $stream->createOutStreamHeader('', array(), true);
+        return new Packet($stream->getSwitchBox(), $header, $pub_key);
+    }
+
+    static function outRequest(Stream $stream, array $args)
+    {
+        $hash = $args['hash'];
+
+        $header = $stream->createOutStreamHeader('peer', array('peer' => $hash));
         return new Packet($stream->getSwitchBox(), $header, null);
     }
 

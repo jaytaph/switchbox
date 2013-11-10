@@ -7,7 +7,6 @@
 namespace SwitchBox;
 
 use SwitchBox\Packet\Line;
-use SwitchBox\Packet\Open;
 
 class Packet {
     /** @var array */
@@ -29,6 +28,7 @@ class Packet {
     const TYPE_PING     = "ping";
 
     /**
+     * @param Switchbox $switchbox
      * @param null $header
      * @param null $body
      */
@@ -100,21 +100,23 @@ class Packet {
     }
 
     /**
+     * @param SwitchBox $switchbox
      * @param $bindata
+     * @param null $ip
+     * @param null $port
      * @return Packet
      */
     static function decode(SwitchBox $switchbox, $bindata, $ip = null, $port = null) {
-        $res1  = unpack('nlen/A*rest', $bindata);
-        if ($res1['len'] > strlen($res1['rest'])) {
-            $a = 1;
-        }
-        $res2 = unpack('A'.$res1['len'].'json/A*body', $res1['rest']);
-        $packet = new Packet($switchbox, json_decode($res2['json'], true), $res2['body']);
+        $res = unpack('nlen', substr($bindata, 0, 2));
+        $json = substr($bindata, 2, $res['len']);
+        $body = substr($bindata, 2 + $res['len']);
+        $packet = new Packet($switchbox, json_decode($json, true), $body);
 
         // set packet's originating IP and port number
         if ($ip && $port) {
             $packet->setFrom($ip, $port);
         }
+
         return $packet;
     }
 

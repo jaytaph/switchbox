@@ -3,9 +3,9 @@
 namespace SwitchBox\Admin\Commands;
 
 use SwitchBox\DHT\Node;
-use SwitchBox\Packet\Ping;
 use SwitchBox\Stream;
 use SwitchBox\SwitchBox;
+use SwitchBox\Packet\Ping;
 use SwitchBox\Packet\Line\Peer as LinePeer;
 
 class Peer implements iCmd {
@@ -24,9 +24,6 @@ class Peer implements iCmd {
 
         // Send out a ping packet, so they might punch through our NAT (if any)
         $switchbox->getTxQueue()->enqueue_packet($destination, Ping::generate($switchbox));
-        $switchbox->getTxQueue()->enqueue_packet($destination, Ping::generate($switchbox));
-        $switchbox->getTxQueue()->enqueue_packet($destination, Ping::generate($switchbox));
-
 
         // Ask (all!??) nodes to let destination connect to use
         foreach ($switchbox->getMesh()->getConnectedNodes() as $node) {
@@ -36,7 +33,9 @@ class Peer implements iCmd {
             if ($node->getName() == $switchbox->getSelfNode()->getName()) continue;
 
             $stream = new Stream($switchbox, $node, "peer", new LinePeer());
-            $stream->send(LinePeer::generate($stream, $hash));
+            $stream->send(LinePeer::outRequest($stream, array(
+                'hash' => $hash,
+            )));
         }
     }
 
