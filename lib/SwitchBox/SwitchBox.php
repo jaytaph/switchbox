@@ -12,7 +12,9 @@ use SwitchBox\Packet\Line\Seek as LineSeek;
 use SwitchBox\Packet\Ping;
 
 // Make sure we are using GMP extension for AES libraries
-if (! defined('USE_EXT')) define('USE_EXT', 'GMP');
+if (! defined('USE_EXT')) {
+    define('USE_EXT', 'GMP');
+}
 
 
 define('ANSI_RESET', "\x1b[0m");
@@ -149,7 +151,7 @@ class SwitchBox {
             $w = $x = NULL;
             $ret = socket_select($r, $w, $x, self::SELECT_TIMEOUT);
             if ($ret === false) {
-                die("socket_select() failed: ".socket_strerror(socket_last_error()."\n"));
+                throw new \RunTimeException("socket_select() failed: ".socket_strerror(socket_last_error()."\n"));
             }
             if ($ret == 0) {
                 // Timeout occurred

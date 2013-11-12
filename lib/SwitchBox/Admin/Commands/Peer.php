@@ -14,7 +14,7 @@ class Peer implements iCmd {
     {
         $nodes = $switchbox->getMesh()->findMatchingNodes($args[0]);
         if (count($nodes) == 0) {
-            $buf = "Cannot find any nodes matching '$hash'. Try and 'seek' first...\n";
+            $buf = "Cannot find any nodes matching '".$args[0]."'. Try and 'seek' first...\n";
             socket_write($sock, $buf, strlen($buf));
             return;
         }

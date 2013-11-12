@@ -29,12 +29,12 @@ class Hash {
      * @param int $format
      * @return array|string
      */
-    public function getHash($format = Hash::OUTPUT_HEX) {
-        if ($format == Hash::OUTPUT_BINARY) {
+    public function getHash($format = self::OUTPUT_HEX) {
+        if ($format == self::OUTPUT_BINARY) {
             return Utils::hex2bin($this->hash);
         }
 
-        if ($format == Hash::OUTPUT_BYTE_ARRAY) {
+        if ($format == self::OUTPUT_BYTE_ARRAY) {
             $tmp = array();
             for ($i=0; $i!=strlen($this->hash); $i++) {
                 $tmp[] = hexdec($this->hash[$i]);
@@ -65,8 +65,8 @@ class Hash {
         $sbtab = array(-1,0,1,1,2,2,2,2,3,3,3,3,3,3,3,3);
         $ret = 252;
 
-        $s = $this->getHash(Hash::OUTPUT_BYTE_ARRAY);
-        $d = $other->getHash(Hash::OUTPUT_BYTE_ARRAY);
+        $s = $this->getHash(self::OUTPUT_BYTE_ARRAY);
+        $d = $other->getHash(self::OUTPUT_BYTE_ARRAY);
 
         for ($i=count($s)-1; $i>=0; $i--) {
             $diff = $s[$i] ^ $d[$i];
@@ -87,8 +87,8 @@ class Hash {
      * @return int
      */
     public function compare(Hash $other) {
-        $s = $this->getHash(Hash::OUTPUT_BYTE_ARRAY);
-        $d = $other->getHash(Hash::OUTPUT_BYTE_ARRAY);
+        $s = $this->getHash(self::OUTPUT_BYTE_ARRAY);
+        $d = $other->getHash(self::OUTPUT_BYTE_ARRAY);
 
         for ($i=count($s)-1; $i>=0; $i--) {
             // We probably should not return directly, but check all digits anyway against timing attacks.
@@ -104,8 +104,8 @@ class Hash {
      * @return Hash
      */
     public function binaryxor(Hash $other) {
-        $s = $this->getHash(Hash::OUTPUT_BYTE_ARRAY);
-        $d = $other->getHash(Hash::OUTPUT_BYTE_ARRAY);
+        $s = $this->getHash(self::OUTPUT_BYTE_ARRAY);
+        $d = $other->getHash(self::OUTPUT_BYTE_ARRAY);
 
         $r = "";
         for ($i=count($s)-1; $i >=0; $i--) {
@@ -130,7 +130,7 @@ class Hash {
      * @return string
      */
     public function __toString() {
-        return $this->getHash(Hash::OUTPUT_HEX);
+        return $this->getHash(self::OUTPUT_HEX);
     }
 
 }
