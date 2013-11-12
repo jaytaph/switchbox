@@ -163,6 +163,10 @@ class Node {
         unset($this->streams[$stream->getId()]);
     }
 
+    function getStreams() {
+        return $this->streams;
+    }
+
 
     public function setName($name)
     {

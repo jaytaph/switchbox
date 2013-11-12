@@ -32,7 +32,7 @@ class Packet {
      * @param null $header
      * @param null $body
      */
-    function __construct(Switchbox $switchbox, $header = null, $body = null) {
+    public function __construct(Switchbox $switchbox, $header = null, $body = null) {
         $this->switchbox = $switchbox;
 
         if ($header !== null) $this->setHeader($header);
@@ -42,7 +42,7 @@ class Packet {
     }
 
     // @TODO: A packet should not concern themselves on where they came from. But might link a packet to a stream/node
-    function setFrom($ip, $port) {
+    public function setFrom($ip, $port) {
         $this->from_ip = $ip;
         $this->from_port = $port;
     }
@@ -50,14 +50,14 @@ class Packet {
     /**
      * @return array
      */
-    function getHeader() {
+    public function getHeader() {
         return $this->header;
     }
 
     /**
      * @param array $header
      */
-    function setHeader(array $header) {
+    public function setHeader(array $header) {
         $this->header = $header;
         $this->type = self::TYPE_UNKNOWN;
 
@@ -88,14 +88,14 @@ class Packet {
     /**
      * @return mixed
      */
-    function getBody() {
+    public function getBody() {
         return $this->body;
     }
 
     /**
      * @param $body
      */
-    function setBody($body) {
+    public function setBody($body) {
         $this->body = $body;
     }
 
@@ -144,12 +144,6 @@ class Packet {
 
     function getFromPort() {
         return $this->from_port;
-    }
-
-    function __toString() {
-        return "<" . strlen(json_encode($this->getHeader())) . ">\n" .
-               print_r($this->getHeader(),true) . "\n" .
-               "Body[".strlen($this->getBody())."]";
     }
 
 }

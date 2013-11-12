@@ -4,6 +4,10 @@ namespace SwitchBox\Packet;
 
 use SwitchBox\DHT\Node;
 use SwitchBox\Packet;
+use SwitchBox\Packet\Line\Connect;
+use SwitchBox\Packet\Line\Peer;
+use SwitchBox\Packet\Line\Seek;
+use SwitchBox\Stream;
 use SwitchBox\SwitchBox;
 use SwitchBox\Utils;
 use SwitchBox\KeyPair;
@@ -39,42 +43,39 @@ class Line {
         $cipher->setIv(Utils::hex2bin($header['iv']));
         $cipher->setKey($from->getDecryptionKey());
 //        print "Decrypting with IV/KEY: ".$header['iv']." / ".bin2hex($from->getDecryptionKey())."\n";
-        $inner_packet = $cipher->decrypt($packet->getBody());
-        $inner_packet = Packet::decode($switchbox, $inner_packet);
+        $inner_packet = Packet::decode($switchbox, $cipher->decrypt($packet->getBody()));
 
         $inner_header = $inner_packet->getHeader();
         $stream = $from->getStream($inner_header['c']);
-        if ($stream) {
-            print "Processing from stream\n";
-            // Process already existing stream
-            $stream->process($inner_packet);
-            return;
+        if (! $stream) {
+            $stream = new Stream($switchbox, $from, $inner_header['c']);
+
+            // There is an incoming request. We must respond to it
+            print "No stream found. Creating new stream...\n";
+
+            // Stream hasn't been opened yet. Let's create a stream
+            switch ($inner_header['type']) {
+                case "connect" :
+                    $stream->addProcessor("connect", new Connect($stream));
+                    break;
+                case "peer" :
+                    $stream->addProcessor("peer", new Peer($stream));
+                    break;
+                case "seek" :
+                    $stream->addProcessor("seek", new Seek($stream));
+                    break;
+                default :
+                    print ANSI_RED . "Unknown incoming type in line: ".print_r($inner_header, true).ANSI_RESET . "\n";
+                    return;
+                    break;
+            }
+
+            print ANSI_YELLOW . "CREATED ".$stream->getType()." STREAM " . ANSI_RESET . "\n";
         }
 
-        print "No stream found. Creating something or something...\n";
-        print_r($inner_header);
-
-        // Stream hasn't been opened yet. Let's create a stream
-        switch ($inner_header['type']) {
-            case "connect" :
-                print ANSI_YELLOW . "CREATING CONNECT STREAM " . ANSI_RESET . "\n";
-                // We don't open a connect stream (not important). But we need to connect to another site
-                $node = new Node($inner_header['ip'], $inner_header['port'], KeyPair::convertDerToPem($inner_packet->getBody()));
-                $switchbox->getTxQueue()->enqueue_packet($node, Open::generate($switchbox, $node, null));
-                break;
-//          case "peer" :
-//              print ANSI_YELLOW . "CREATING PEER STREAM " . ANSI_RESET . "\n";
-//              $stream = new Stream($switchbox, $from, "peer", new Peer(), $inner_header['c']);
-//              break;
-            case "seek" :
-                print ANSI_YELLOW . "CREATING SEEK STREAM " . ANSI_RESET . "\n";
-//                $stream = new Stream($switchbox, $from, "seek", new Seek(), $inner_header['c']);
-                break;
-            default :
-                print ANSI_RED . "Unknown incoming type in line: ".print_r($inner_header, true).ANSI_RESET . "\n";
-                break;
-        }
-
+        // Process already existing stream, make sure end/acks etc are done properly
+        $stream->process($inner_packet);
+        return;
     }
 
     /**

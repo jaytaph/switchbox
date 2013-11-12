@@ -11,22 +11,19 @@ class seek implements iCmd {
 
     function execute(SwitchBox $switchbox, $sock, $args)
     {
-        if (count($args) == 0) return;
-
-        $hashes = array();
-
         if ($args[0] == "all") {
-            // We will seek all nodes, connected and unconnected
-            foreach ($switchbox->getMesh()->getAllNodes() as $node) {
-                /** @var $node Node */
-                $hashes[] = $node->getName();
-            }
+            $nodes = $switchbox->getMesh()->getAllNodes();
         } else {
-            $hashes = $args;
+            $nodes = $switchbox->getMesh()->findMatchingNodes($args[0]);
         }
 
-        foreach ($hashes as $hash) {
-            $this->_seek($switchbox, $hash);
+        if (count($nodes) == 0) {
+            $this->_seek($switchbox, $args[0]);
+            return;
+        }
+
+        foreach ($nodes as $destination) {
+            $this->_seek($switchbox, $destination->getName());
         }
     }
 
@@ -36,10 +33,11 @@ class seek implements iCmd {
         foreach ($switchbox->getMesh()->getClosestForHash($hash) as $node) {
             /** @var $node Node */
 
-            $stream = new Stream($switchbox, $node, "seek", new LineSeek());
-            $stream->send(LineSeek::outRequest($stream, array(
+            $stream = new Stream($switchbox, $node);
+            $stream->addProcessor("seek", new LineSeek($stream));
+            $stream->start(array(
                 'hash' => $hash,
-            )));
+            ));
         }
     }
 
@@ -48,7 +46,7 @@ class seek implements iCmd {
         return array(
             "seek [node|all]",
             "seeks and connects to a nodename",
-            "No additional help",
+            "Node can be just the start of a node name. It will connect to all matching nodes.",
         );
     }
 
