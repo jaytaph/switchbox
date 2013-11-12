@@ -6,13 +6,13 @@ use SwitchBox\SwitchBox;
 
 class Help implements iCmd {
 
-    function execute(SwitchBox $switchbox, $sock, $args)
+    public function execute(SwitchBox $switchbox, $sock, $args)
     {
         $buf = "No help today\n";
         socket_write($sock, $buf, strlen($buf));
     }
 
-    function help()
+    public function help()
     {
         return array(
             "help <command>",

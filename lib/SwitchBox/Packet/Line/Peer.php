@@ -7,63 +7,50 @@ use SwitchBox\Packet;
 use SwitchBox\Stream;
 use SwitchBox\SwitchBox;
 
-class Peer implements iLineProcessor {
+class Peer extends streamProcessor {
 
-    static function inRequest(SwitchBox $switchbox, Node $node, Packet $packet) {
-        print "PEER INREQUEST\n";
-        $header = $packet->getHeader();
-        $body = $packet->getBody();
-        print_r($header);
-        print_r($body);
 
-        // Got a peer request. Do a middle-man connection
-    }
-
-    static function inResponse(SwitchBox $switchbox, Node $node, Packet $packet) {
-        print "PEER INRESPONSE\n";
-        $header = $packet->getHeader();
-        $body = $packet->getBody();
-        print_r($header);
-        print_r($body);
-
-        // Nothing to do.. the response is just an ack
-
-//        $ip = $switchbox->getSelfNode()->getIp();
-//        $port = $switchbox->getSelfNode()->getPort();
-//        $pub_key = $switchbox->getKeyPair()->getPublicKey(KeyPair::FORMAT_DER);
-
-//        $host = new Host($ip, $port, $pub_key);
-//        $switchbox->getMesh()->addHost($host);
-//        // we should send an open packet, just like a normal seed
-//        $hash = Host::generateNodeName($pub_key);
-//        $node = $switchbox->getMesh()->getNode($hash);
-//        if (! $node) {
-//            // We don't know about this node. Let's connect to it...
-//            $host = new Host($ip, $port, $pub_key);
-//            $switchbox->getTxQueue()->enqueue_packet($host, Open::generate($switchbox, $host, null));
-//        }
-
-//        $stream = new Stream($switchbox, $node, "connect", new Connect());
-//        $stream->send(Connect::generate($stream, $ip, $port, $pub_key));
-    }
-
-    static function outResponse(Stream $stream, array $args)
+    public function processIncoming(Packet $packet)
     {
-        $ip = $args['ip'];
-        $port = $args['port'];
-        $pub_key = $args['pub_key'];
+        $header = $packet->getHeader();
+        print ANSI_MAGENTA;
+        print_r($header);
+        print ANSI_RESET;
 
-        print "outResponse Connect\n";
-        $header = $stream->createOutStreamHeader('', array(), true);
-        return new Packet($stream->getSwitchBox(), $header, $pub_key);
+        if (isset($header['peer'])) {
+            $this->_peer($header['peer']);
+        }
+
     }
 
-    static function outRequest(Stream $stream, array $args)
+    protected function _peer($peer) {
+        $node = $this->getSwitchbox()->getMesh()->getNode($peer);
+        if (! $node) {
+            print ANSI_RED . "Cannot find the peer to connect to..." . ANSI_RESET . "\n";
+            return null;
+        }
+
+        // Make a connection request to the other side
+        $stream = new Stream($this->getSwitchbox(), $node);
+        $stream->addProcessor("connect", new Connect($stream));
+        $stream->start(array(
+            'ip' => $this->getNode()->getIp(),
+            'port' => $this->getNode()->getPort(),
+            'pub_key' => $this->getNode()->getPublicKey(),
+        ));
+
+//        $header = $this->getStream()->createOutStreamHeader('', array(), true);
+//        $this->getStream()->send(new Packet($this->getSwitchBox(), $header, null));
+    }
+
+
+    public function generate(array $args)
     {
+        print "*** generate PEER\n";
         $hash = $args['hash'];
 
-        $header = $stream->createOutStreamHeader('peer', array('peer' => $hash));
-        return new Packet($stream->getSwitchBox(), $header, null);
+        $header = $this->getStream()->createOutStreamHeader('peer', array('peer' => $hash));
+        return new Packet($this->getSwitchBox(), $header, null);
     }
 
 }

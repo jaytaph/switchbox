@@ -18,7 +18,7 @@ class Open {
      * @return null|Node
      * @throws \DomainException
      */
-    static function process(SwitchBox $switchbox, Packet $packet) {
+    static public function process(SwitchBox $switchbox, Packet $packet) {
         $header = $packet->getHeader();
         if ($header['type'] != "open") {
             throw new \DomainException("Not an OPEN packet");
@@ -72,11 +72,6 @@ class Open {
             print_r($n);
             print ANSI_RESET;
             return null;
-        } else {
-            print ANSI_GREEN . "\n";
-            $n = KeyPair::convertDerToPem($key);
-            print_r($n);
-            print ANSI_RESET;
         }
         $details = openssl_pkey_get_details($res);
         if (! $details) {
@@ -109,7 +104,7 @@ class Open {
         $node = $switchbox->getMesh()->seen(Utils::bin2hex($hash, 64));
         if (! $node) {
             // New node, let's create it
-            $node = new Node($packet->getFromIp(), $packet->getFromPort(), $key, $hash);
+            $node = new Node($packet->getFromIp(), $packet->getFromPort(), KeyPair::convertDerToPem($key), hash('sha256', $innerPacket->getBody()));
             $switchbox->getMesh()->addNode($node);
         }
 
@@ -152,7 +147,7 @@ class Open {
      * @return Packet
      * @throws \DomainException
      */
-    static function generate(SwitchBox $switchbox, Node $node, $family = null) {
+    static public function generate(SwitchBox $switchbox, Node $node, $family = null) {
         // 0. Setup some stuff
 
         $node->setLineOut(Utils::bin2hex(openssl_random_pseudo_bytes(16), 32));

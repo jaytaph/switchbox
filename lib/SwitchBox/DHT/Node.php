@@ -69,7 +69,7 @@ class Node {
 
 
 
-    function __construct($ip, $port, $public_key = null, $hash = null) {
+    public function __construct($ip, $port, $public_key = null, $hash = null) {
 
         if (! $public_key && ! $hash) {
             throw new \InvalidArgumentException("Either public key or hash must be filled");
@@ -99,7 +99,7 @@ class Node {
      * @param $public_key
      * @return string
      */
-    public static function generateNodeName($public_key)
+    static public function generateNodeName($public_key)
     {
         return hash('sha256', KeyPair::convertPemToDer($public_key));
     }
@@ -159,8 +159,12 @@ class Node {
         $this->streams[$stream->getId()] = $stream;
     }
 
-    function removeStream(Stream $stream) {
+    public function removeStream(Stream $stream) {
         unset($this->streams[$stream->getId()]);
+    }
+
+    public function getStreams() {
+        return $this->streams;
     }
 
 
@@ -314,21 +318,21 @@ class Node {
 //        $node->setBucket($node, $bucketIdx);
 //    }
 //
-//    function setBucket($bucketIdx) {
+//    public function setBucket($bucketIdx) {
 //        $this->bucket_idx = $bucketIdx;
 //    }
 //
-//    function getBucket() {
+//    public function getBucket() {
 //        return $this->bucket_idx;
 //    }
 
 
-    function __toString() {
+    public function __toString() {
         return $this->getIp().":".$this->getPort()." [".$this->getName()."]";
     }
 
 
-    function recalcEncryptionKeys() {
+    public function recalcEncryptionKeys() {
         // No need to (re)calc when not both lines are known
         if (! $this->getLineIn() || ! $this->getLineOut()) return;
 

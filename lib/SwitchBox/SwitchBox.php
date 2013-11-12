@@ -26,7 +26,7 @@ define('ANSI_WHITE', "\x1b[37;1m");
 
 
 class SwitchBox {
-    const SELECT_TIMEOUT        = 2;        // Nr of seconds before socket_select() will timeout to do housekeeping
+    const SELECT_TIMEOUT        = 5;        // Nr of seconds before socket_select() will timeout to do housekeeping
 
     /** @var \SwitchBox\KeyPair */
     protected $keypair;
@@ -38,26 +38,26 @@ class SwitchBox {
     protected $mesh;
     /** @var TxQueue */
     protected $txqueue;
+    /** @var resource TCP socket for admin */
+    protected $admin_sock;
+    /** @var array TCP admin client sockets */
+    protected $admin_sock_clients = array();
+
     /** @var resource TCP socket for commands */
     protected $cmd_sock;
     /** @var array TCP client sockets */
     protected $cmd_sock_clients = array();
+
     /** @var bool */
     protected $ended = false;
 
-
-    public function closeSock($sock) {
-        $i = array_search($sock, $this->cmd_sock_clients);
-        if ($i !== false) {
-            unset($this->cmd_sock_clients[$i]);
-            socket_close($sock);
-        }
-    }
 
     public function __construct(array $seeds, KeyPair $keypair, $udp_port = 42424) {
         // Setup generic structures
         $this->mesh = new Mesh($this);
         $this->txqueue = new TxQueue();
+
+        $this->start_time = time();
 
         // Create self node based on keypair
         $this->keypair = $keypair;
@@ -73,12 +73,23 @@ class SwitchBox {
             $this->txqueue->enqueue_packet($seed, Open::generate($this, $seed, null));
         }
 
+        // Setup TCP admin socket
+        $this->admin_sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+        socket_set_option($this->admin_sock, SOL_SOCKET, SO_REUSEADDR, 1);
+        socket_bind($this->admin_sock, 0, 42424);
+        socket_listen($this->admin_sock, 1024);
+        $this->admin_sock_clients = array();
+
         // Setup TCP command socket
         $this->cmd_sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
         socket_set_option($this->cmd_sock, SOL_SOCKET, SO_REUSEADDR, 1);
-        socket_bind($this->cmd_sock, 0, 42424);
+        socket_bind($this->cmd_sock, 0, 42425);
         socket_listen($this->cmd_sock, 1024);
         $this->cmd_sock_clients = array();
+    }
+
+    public function getStartTime() {
+        return $this->start_time;
     }
 
     /**
@@ -132,8 +143,9 @@ class SwitchBox {
                 }
             }
 
-            $r = array($this->sock, $this->cmd_sock);
+            $r = array($this->sock, $this->cmd_sock, $this->admin_sock);
             $r = array_merge($r, $this->cmd_sock_clients);
+            $r = array_merge($r, $this->admin_sock_clients);
             $w = $x = NULL;
             $ret = socket_select($r, $w, $x, self::SELECT_TIMEOUT);
             if ($ret === false) {
@@ -150,20 +162,31 @@ class SwitchBox {
                     // do UDP telehash packets
                     $this->_loop_udp_packets($sock);
                 }
-                  if ($sock == $this->cmd_sock) {
+
+                if ($sock == $this->admin_sock) {
                     // do initial TCP connections
-                    $this->_loop_tcp_packets($sock);
+                    $this->_loop_tcp_admin_packets($sock);
+                }
+
+                if ($sock == $this->cmd_sock) {
+                    // do initial TCP connections
+                    $this->_loop_tcp_cmd_packets($sock);
                 }
 
                 if (in_array($sock, $this->cmd_sock_clients)) {
                     // do TCP clients
-                    $this->_loop_tcp_packets_client($sock);
+                    $this->_loop_tcp_packets_cmd_client($sock);
+                }
+
+                if (in_array($sock, $this->admin_sock_clients)) {
+                    // do TCP clients
+                    $this->_loop_tcp_packets_admin_client($sock);
                 }
             }
         }
     }
 
-    function _loop_tcp_packets_client($sock) {
+    protected  function _loop_tcp_packets_admin_client($sock) {
         $s = socket_read($sock, 2048);
         $s = trim($s);
 
@@ -182,15 +205,31 @@ class SwitchBox {
         }
 
         // Display prompt only when we are still having an open TCP socket
-        if (in_array($sock, $this->cmd_sock_clients)) {
+        if (in_array($sock, $this->admin_sock_clients)) {
             $buf = "> ";
             socket_write($sock, $buf, strlen($buf));
         }
     }
 
-    function _loop_tcp_packets($sock) {
+    public function _loop_tcp_packets_cmd_client($sock) {
+        $json = socket_read($sock, 2048);
+        $json = trim($json);
+        $json = json_decode($json, true);
+
+        // Check if class exists
+        $class = "\\SwitchBox\\Comm\\Commands\\".ucfirst(strtolower($json['c']));
+        if (class_exists($class)) {
+            $cmd = new $class();
+            $buf = json_encode($cmd->execute($this, $sock, $json));
+        } else {
+            $buf = json_encode(array('err' => "Unknown command: ".$json['c']));
+        }
+        socket_write($sock, $buf, strlen($buf));
+    }
+
+    protected function _loop_tcp_admin_packets($sock) {
         $sock = socket_accept($sock);
-        $this->cmd_sock_clients[] = $sock;
+        $this->admin_sock_clients[] = $sock;
 
         $buf = "\nWelcome to the TeleHash Admin Panel. \n" .
                "To quit, type 'quit', To seek help, type 'help'\n";
@@ -200,8 +239,14 @@ class SwitchBox {
         socket_write($sock, $buf, strlen($buf));
     }
 
+    protected function _loop_tcp_cmd_packets($sock) {
+        $sock = socket_accept($sock);
+        $this->cmd_sock_clients[] = $sock;
+    }
 
-    function _loop_udp_packets($sock) {
+
+
+    protected function _loop_udp_packets($sock) {
         $ip = ""; $port = 0;
         socket_recvfrom($sock, $buf, 2048, 0, $ip, $port);
         $a = bin2hex($buf);
@@ -235,10 +280,11 @@ class SwitchBox {
                 print_r($node->getInfo());
 
                 // Try and do a seek to ourselves, this allows us to find our outside IP/PORT
-                $stream = new Stream($this, $node, "seek", new Line\Seek());
-                $stream->send(Line\Seek::outRequest($stream, array(
+                $stream = new Stream($this, $node);
+                $stream->addProcessor("seek", new Line\Seek($stream));
+                $stream->start(array(
                     'hash' => $this->getSelfNode()->getName(),
-                )));
+                ));
             } else {
                 print ANSI_YELLOW."Node ".(string)$node." is not yet connected. ".ANSI_RESET."\n";
                 $this->txqueue->enqueue_packet($node, Open::generate($this, $node, null));
@@ -275,10 +321,10 @@ class SwitchBox {
 
 
     public function doMaintenance() {
-        print ANSI_CYAN . "*** Maintenance Start". ANSI_RESET . "\n";
-        $this->_seekNodes();
-        $this->_connectToNodes();
-        print ANSI_CYAN . "*** Maintenance End". ANSI_RESET . "\n";
+//        print ANSI_CYAN . "*** Maintenance Start". ANSI_RESET . "\n";
+//        $this->_seekNodes();
+//        $this->_connectToNodes();
+//        print ANSI_CYAN . "*** Maintenance End". ANSI_RESET . "\n";
     }
 
     protected function _seekNodes() {
@@ -292,10 +338,9 @@ class SwitchBox {
             foreach ($this->getMesh()->getClosestForHash($hash) as $node) {
                 /** @var $node Node */
 
-                $stream = new Stream($this, $node, "seek", new LineSeek());
-                $stream->send(LineSeek::outRequest($stream, array(
-                    'hash' => $hash,
-                )));
+                $stream = new Stream($this, $node);
+                $stream->addProcessor("seek", new LineSeek($stream));
+                $stream->start(array('hash' => $hash));
             }
         }
 
@@ -324,13 +369,25 @@ class SwitchBox {
                 // Don't ask ourselves.
                 if ($seed->getName() == $this->getSelfNode()->getName()) continue;
 
-                $stream = new Stream($this, $seed, "peer", new LinePeer());
-                $stream->send(LinePeer::outRequest($stream, array(
-                    'hash' => $node->getName(),
-                )));
+                $stream = new Stream($this, $seed);
+                $stream->addProcessor("peer", new LinePeer($stream));
+                $stream->start(array('hash' => $node->getName()));
             }
         }
     }
 
 
+    public function closeSock($sock) {
+        $i = array_search($sock, $this->cmd_sock_clients);
+        if ($i !== false) {
+            unset($this->cmd_sock_clients[$i]);
+            socket_close($sock);
+        }
+
+        $i = array_search($sock, $this->admin_sock_clients);
+        if ($i !== false) {
+            unset($this->admin_sock_clients[$i]);
+            socket_close($sock);
+        }
+    }
 }

@@ -7,7 +7,7 @@ namespace SwitchBox;
 
 use SwitchBox\DHT\Node;
 use SwitchBox\Packet\Line;
-use SwitchBox\Packet\Line\iLineProcessor;
+use SwitchBox\Packet\Line\streamProcessor;
 
 class Stream {
     /** @var string */
@@ -34,16 +34,16 @@ class Stream {
     /** @var iLineProcessor */
     protected $processor;               // Processor to process the packets in this stream
 
+    protected $end = false;
+
     const MAX_BACKLOG       = 100;      // Maximum number of unacknowledged packets
     const MAX_RETRIES       = 3;        // Maximum number of retries on a single package
 
-    function __construct(SwitchBox $switchbox, Node $to, $type, Line\iLineProcessor $processor, $id = null) {
+    public function __construct(SwitchBox $switchbox, Node $to, $id = null) {
         $this->id = $id ? $id : Utils::bin2hex(openssl_random_pseudo_bytes(16), 32);
-//        print "New Stream ID: ".$this->id."\n";
+        print "New Stream ID: ".$this->id."\n";
         $this->to = $to;
         $this->switchbox = $switchbox;
-
-        $this->processor = $processor;
 
         $this->in_queue = array();
         $this->out_queue = array();
@@ -53,8 +53,8 @@ class Stream {
 //        $this->out_confirmed = 0;
 //        $this->in_dups = 0;
         $this->last_ack = 0;
-        $this->type = $type;
-        $this->custom = (substr($type, 0, 1) == "_");
+
+        $this->end = false;
 
 //        $this->backbuffer = array();
 
@@ -62,7 +62,14 @@ class Stream {
         $to->addStream($this);
     }
 
-    function addToOutQueue($seq, Packet $packet) {
+    public function addProcessor($type, StreamProcessor $processor) {
+        $this->type = $type;
+        $this->custom = (substr($type, 0, 1) == "_");
+
+        $this->processor = $processor;
+    }
+
+    public function addToOutQueue($seq, Packet $packet) {
         if (count($this->out_queue) > self::MAX_BACKLOG) {
             throw new \DomainException("Too many packets in stream ".$this->getId()." backlog");
         }
@@ -83,7 +90,7 @@ class Stream {
      *
      * @param $seq
      */
-    function acknowledgePackets($seq) {
+    public function acknowledgePackets($seq) {
         $this->out_queue = array_filter($this->out_queue, function($entry) use ($seq) {
             // Entry = array[retry, seq, packet]
             return $entry[1] < $seq;
@@ -99,15 +106,15 @@ class Stream {
      *
      * @return int
      */
-    function getNextSequence() {
+    public function getNextSequence() {
         return $this->out_seq++;
     }
 
-    function getId() {
+    public function getId() {
         return $this->id;
     }
 
-    function getLastAck() {
+    public function getLastAck() {
         return $this->last_ack;
     }
 
@@ -127,12 +134,12 @@ class Stream {
         return $this->to;
     }
 
-    function getPacketFromOutQueue($seq) {
+    public function getPacketFromOutQueue($seq) {
         return isset($this->out_queue[$seq]) ? $this->out_queue[$seq] : null;
     }
 
 
-    function getProcessor() {
+    public function getProcessor() {
         return $this->processor;
     }
 
@@ -165,21 +172,22 @@ class Stream {
             $this->acknowledgePackets($header['ack']);
         }
 
-        print "Actual process by ".get_class($this->getProcessor())."!\n";
-        $this->getProcessor()->inResponse($this->getSwitchBox(), $this->getTo(), $packet);
+        print "Actual getProcessor()->processIncoming() by ".get_class($this->getProcessor())."!\n";
+        $this->getProcessor()->processIncoming($packet);
 
         // We can end the stream, and delete it and stuff
         if (isset($header['end']) && $header['end']) {
-            $this->getTo()->removeStream($this);
+            $this->end = true;
+            //$this->getTo()->removeStream($this);
         }
     }
 
-    function send(Packet $inner_packet) {
+    public function send(Packet $inner_packet) {
         $packet = Line::generate($this->getSwitchBox(), $this->getTo(), $inner_packet);
         $this->getSwitchBox()->getTxQueue()->enqueue_packet($this->getTo(), $packet);
     }
 
-    function createOutStreamHeader($type, $extra_headers, $end = true) {
+    public function createOutStreamHeader($type, $extra_headers, $end = true) {
         $header = array(
             'c' => $this->getId(),
             'seq' => $this->getNextSequence(),
@@ -188,6 +196,26 @@ class Stream {
         if ($type) $header['type'] = $type;
         if ($end) $header['end'] = true;
         return array_merge($header, $extra_headers);
+    }
+
+    public function getType() {
+        return $this->type;
+    }
+
+    public function isCustom() {
+        return $this->custom;
+    }
+
+    /**
+     * Starts a stream by generating an initial request
+     * @param array $args
+     */
+    public function start(array $args) {
+        $this->send($this->getProcessor()->generate($args));
+    }
+
+    public function __toString() {
+        return "#".$this->getId()." [S: ".$this->out_seq." A: ".$this->last_ack." E: ".($this->end ? "yes" : "no")."]\n";
     }
 
 }

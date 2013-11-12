@@ -18,7 +18,7 @@ class KeyPair {
     /**
      * @param $filename
      */
-    function __construct($filename, $generate = true)
+    public function __construct($filename, $generate = true)
     {
         // Generate new keypair if we can't find one
         if (! file_exists($filename) && $generate) {
@@ -35,7 +35,7 @@ class KeyPair {
     /**
      * @param $filename
      */
-    static function generate($filename, $bits = 2048) {
+    static public function generate($filename, $bits = 2048) {
         $res = openssl_pkey_new(array(
             "digest_algo" => "sha512",
             "private_key_bits" => $bits,
@@ -66,9 +66,9 @@ class KeyPair {
     /**
      * @return mixed
      */
-    public function getPublicKey($format = KeyPair::FORMAT_PEM)
+    public function getPublicKey($format = self::FORMAT_PEM)
     {
-        if ($format == KeyPair::FORMAT_DER) {
+        if ($format == self::FORMAT_DER) {
             return self::convertPemToDer($this->public_key);
         }
         return $this->public_key;
@@ -81,7 +81,7 @@ class KeyPair {
      * @param $length
      * @return string
      */
-    static function derLength($length) {
+    static public function derLength($length) {
         if ($length < 128) return str_pad(dechex($length), 2, '0', STR_PAD_LEFT);
         $output = dechex($length);
         if (strlen($output) % 2 != 0) $output = '0'.$output;
@@ -97,10 +97,10 @@ class KeyPair {
      * @param $pem
      * @return string
      */
-    static function convertPemToDer($pem) {
+    static public function convertPemToDer($pem) {
         $matches = array();
         if (!preg_match('~^-----BEGIN ([A-Z ]+)-----\s*?([A-Za-z0-9+=/\r\n]+)\s*?-----END \1-----\s*$~D', $pem, $matches)) {
-            die('Invalid PEM format encountered.'."\n");
+            die('Invalid PEM format encountered.'.$pem."\n");
         }
         $derData = str_replace(array("\r", "\n"), array('', ''), $matches[2]);
         $derData = base64_decode($derData);
@@ -114,7 +114,7 @@ class KeyPair {
      * @param string $header
      * @return string
      */
-    static function convertDerToPem($der, $header = "PUBLIC KEY") {
+    static public function convertDerToPem($der, $header = "PUBLIC KEY") {
         $pem = chunk_split(base64_encode($der), 64, "\n");
         $pem = "-----BEGIN ".$header."-----\n".$pem."-----END ".$header."-----\n";
         return $pem;

@@ -7,7 +7,7 @@ use SwitchBox\SwitchBox;
 
 class distance implements iCmd {
 
-    function execute(SwitchBox $switchbox, $sock, $args)
+    public function execute(SwitchBox $switchbox, $sock, $args)
     {
         foreach ($switchbox->getMesh()->getOrderedNodes($switchbox->getSelfNode()->getHash()) as $node) {
             /** @var $node Node */
@@ -18,7 +18,7 @@ class distance implements iCmd {
         }
     }
 
-    function help()
+    public function help()
     {
         return array(
             "closest ",

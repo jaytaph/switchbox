@@ -9,7 +9,7 @@ use SwitchBox\DHT\Node;
 class TxQueue extends \SplQueue {
 
     // This is why PHP needs method overloading... :(
-    function enqueue_packet(Node $node, Packet $packet) {
+    public function enqueue_packet(Node $node, Packet $packet) {
         if ($node->getIp() == 0) {
             print ANSI_RED . "Not sending to unknown IP ". ANSI_RESET . "\n";
             return;

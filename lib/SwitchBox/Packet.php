@@ -32,7 +32,7 @@ class Packet {
      * @param null $header
      * @param null $body
      */
-    function __construct(Switchbox $switchbox, $header = null, $body = null) {
+    public function __construct(Switchbox $switchbox, $header = null, $body = null) {
         $this->switchbox = $switchbox;
 
         if ($header !== null) $this->setHeader($header);
@@ -42,7 +42,7 @@ class Packet {
     }
 
     // @TODO: A packet should not concern themselves on where they came from. But might link a packet to a stream/node
-    function setFrom($ip, $port) {
+    public function setFrom($ip, $port) {
         $this->from_ip = $ip;
         $this->from_port = $port;
     }
@@ -50,14 +50,14 @@ class Packet {
     /**
      * @return array
      */
-    function getHeader() {
+    public function getHeader() {
         return $this->header;
     }
 
     /**
      * @param array $header
      */
-    function setHeader(array $header) {
+    public function setHeader(array $header) {
         $this->header = $header;
         $this->type = self::TYPE_UNKNOWN;
 
@@ -88,14 +88,14 @@ class Packet {
     /**
      * @return mixed
      */
-    function getBody() {
+    public function getBody() {
         return $this->body;
     }
 
     /**
      * @param $body
      */
-    function setBody($body) {
+    public function setBody($body) {
         $this->body = $body;
     }
 
@@ -106,7 +106,7 @@ class Packet {
      * @param null $port
      * @return Packet
      */
-    static function decode(SwitchBox $switchbox, $bindata, $ip = null, $port = null) {
+    static public function decode(SwitchBox $switchbox, $bindata, $ip = null, $port = null) {
         $res = unpack('nlen', substr($bindata, 0, 2));
         $json = substr($bindata, 2, $res['len']);
         $body = substr($bindata, 2 + $res['len']);
@@ -123,14 +123,14 @@ class Packet {
     /**
      * @return string
      */
-    function encode() {
+    public function encode() {
         $json = json_encode($this->getHeader());
         $len = strlen($json);
 
         return pack("nA".$len."A*", $len, $json, $this->getBody());
     }
 
-    function getType($as_string = false) {
+    public function getType($as_string = false) {
         if ($as_string) {
             // Return constants as string. They are for now the same
             return $this->type;
@@ -138,18 +138,12 @@ class Packet {
         return $this->type;
     }
 
-    function getFromIp() {
+    public function getFromIp() {
         return $this->from_ip;
     }
 
-    function getFromPort() {
+    public function getFromPort() {
         return $this->from_port;
-    }
-
-    function __toString() {
-        return "<" . strlen(json_encode($this->getHeader())) . ">\n" .
-               print_r($this->getHeader(),true) . "\n" .
-               "Body[".strlen($this->getBody())."]";
     }
 
 }

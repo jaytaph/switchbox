@@ -8,7 +8,7 @@ use SwitchBox\SwitchBox;
 
 class Nodes implements iCmd {
 
-    function execute(SwitchBox $switchbox, $sock, $args)
+    public function execute(SwitchBox $switchbox, $sock, $args)
     {
         $i = 0;
         foreach ($switchbox->getMesh()->getAllNodes() as $node) {
@@ -24,7 +24,7 @@ class Nodes implements iCmd {
         }
     }
 
-    function help()
+    public function help()
     {
         return array(
             "nodes",
