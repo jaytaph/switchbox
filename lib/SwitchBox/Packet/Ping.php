@@ -16,12 +16,12 @@ class Ping {
      * @return null|Node
      * @throws \DomainException
      */
-    static function process(SwitchBox $switchbox, Packet $packet) {
+    static public function process(SwitchBox $switchbox, Packet $packet) {
     }
 
     /**
      */
-    static function generate(SwitchBox $switchbox) {
+    static public function generate(SwitchBox $switchbox) {
         return new Packet($switchbox, array(), null);
 
     }

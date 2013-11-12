@@ -10,7 +10,7 @@ use SwitchBox\Packet\Line\Peer as LinePeer;
 
 class Info implements iCmd {
 
-    function execute(SwitchBox $switchbox, $sock, $args)
+    public function execute(SwitchBox $switchbox, $sock, $args)
     {
         $hash = $args[0];
         $node = $switchbox->getMesh()->getNode($hash);
@@ -26,7 +26,7 @@ class Info implements iCmd {
         }
     }
 
-    function help()
+    public function help()
     {
         return array(
             "info [node]",

@@ -106,7 +106,7 @@ class Packet {
      * @param null $port
      * @return Packet
      */
-    static function decode(SwitchBox $switchbox, $bindata, $ip = null, $port = null) {
+    static public function decode(SwitchBox $switchbox, $bindata, $ip = null, $port = null) {
         $res = unpack('nlen', substr($bindata, 0, 2));
         $json = substr($bindata, 2, $res['len']);
         $body = substr($bindata, 2 + $res['len']);
@@ -123,14 +123,14 @@ class Packet {
     /**
      * @return string
      */
-    function encode() {
+    public function encode() {
         $json = json_encode($this->getHeader());
         $len = strlen($json);
 
         return pack("nA".$len."A*", $len, $json, $this->getBody());
     }
 
-    function getType($as_string = false) {
+    public function getType($as_string = false) {
         if ($as_string) {
             // Return constants as string. They are for now the same
             return $this->type;
@@ -138,11 +138,11 @@ class Packet {
         return $this->type;
     }
 
-    function getFromIp() {
+    public function getFromIp() {
         return $this->from_ip;
     }
 
-    function getFromPort() {
+    public function getFromPort() {
         return $this->from_port;
     }
 

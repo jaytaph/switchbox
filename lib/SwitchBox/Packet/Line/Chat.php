@@ -9,7 +9,7 @@ use SwitchBox\SwitchBox;
 
 class Chat extends streamProcessor {
 
-    function processIncoming(Packet $packet)
+    public function processIncoming(Packet $packet)
     {
         $header = $packet->getHeader();
         print ANSI_YELLOW;
@@ -18,7 +18,7 @@ class Chat extends streamProcessor {
     }
 
 
-    function generate(array $args)
+    public function generate(array $args)
     {
         print "*** generate CHAT\n";
 

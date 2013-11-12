@@ -12,7 +12,7 @@ use SwitchBox\SwitchBox;
 class Connect extends streamProcessor {
 
 
-    function processIncoming(Packet $packet)
+    public function processIncoming(Packet $packet)
     {
         $header = $packet->getHeader();
         print ANSI_CYAN;
@@ -48,14 +48,14 @@ class Connect extends streamProcessor {
 //
 //    // We got a incoming connection request. Let's try and connect to there
 //
-//    static function inResponse(SwitchBox $switchbox, Node $node, Packet $packet)
+//    static public function inResponse(SwitchBox $switchbox, Node $node, Packet $packet)
 //    {
 //        // We've sent out a request onto a stream, and we get a response back
 //        print "inResponse Connect\n";
 //    }
 //
 //
-//    static function inRequest(SwitchBox $switchbox, Node $node, Packet $packet)
+//    static public function inRequest(SwitchBox $switchbox, Node $node, Packet $packet)
 //    {
 //        // We've got an incoming request for something
 //
@@ -88,7 +88,7 @@ class Connect extends streamProcessor {
 //        $switchbox->getTxQueue()->enqueue_packet($destination, Open::generate($switchbox, $destination, null));
 //    }
 
-    function generate(array $args)
+    public function generate(array $args)
     {
         print "*** generate CONNECT\n";
         $header = $this->getStream()->createOutStreamHeader('connect', array('ip' => $args['ip'], 'port' => $args['port']), true);

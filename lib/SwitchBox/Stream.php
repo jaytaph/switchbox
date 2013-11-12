@@ -39,7 +39,7 @@ class Stream {
     const MAX_BACKLOG       = 100;      // Maximum number of unacknowledged packets
     const MAX_RETRIES       = 3;        // Maximum number of retries on a single package
 
-    function __construct(SwitchBox $switchbox, Node $to, $id = null) {
+    public function __construct(SwitchBox $switchbox, Node $to, $id = null) {
         $this->id = $id ? $id : Utils::bin2hex(openssl_random_pseudo_bytes(16), 32);
         print "New Stream ID: ".$this->id."\n";
         $this->to = $to;
@@ -62,14 +62,14 @@ class Stream {
         $to->addStream($this);
     }
 
-    function addProcessor($type, StreamProcessor $processor) {
+    public function addProcessor($type, StreamProcessor $processor) {
         $this->type = $type;
         $this->custom = (substr($type, 0, 1) == "_");
 
         $this->processor = $processor;
     }
 
-    function addToOutQueue($seq, Packet $packet) {
+    public function addToOutQueue($seq, Packet $packet) {
         if (count($this->out_queue) > self::MAX_BACKLOG) {
             throw new \DomainException("Too many packets in stream ".$this->getId()." backlog");
         }
@@ -90,7 +90,7 @@ class Stream {
      *
      * @param $seq
      */
-    function acknowledgePackets($seq) {
+    public function acknowledgePackets($seq) {
         $this->out_queue = array_filter($this->out_queue, function($entry) use ($seq) {
             // Entry = array[retry, seq, packet]
             return $entry[1] < $seq;
@@ -106,15 +106,15 @@ class Stream {
      *
      * @return int
      */
-    function getNextSequence() {
+    public function getNextSequence() {
         return $this->out_seq++;
     }
 
-    function getId() {
+    public function getId() {
         return $this->id;
     }
 
-    function getLastAck() {
+    public function getLastAck() {
         return $this->last_ack;
     }
 
@@ -134,12 +134,12 @@ class Stream {
         return $this->to;
     }
 
-    function getPacketFromOutQueue($seq) {
+    public function getPacketFromOutQueue($seq) {
         return isset($this->out_queue[$seq]) ? $this->out_queue[$seq] : null;
     }
 
 
-    function getProcessor() {
+    public function getProcessor() {
         return $this->processor;
     }
 
@@ -182,12 +182,12 @@ class Stream {
         }
     }
 
-    function send(Packet $inner_packet) {
+    public function send(Packet $inner_packet) {
         $packet = Line::generate($this->getSwitchBox(), $this->getTo(), $inner_packet);
         $this->getSwitchBox()->getTxQueue()->enqueue_packet($this->getTo(), $packet);
     }
 
-    function createOutStreamHeader($type, $extra_headers, $end = true) {
+    public function createOutStreamHeader($type, $extra_headers, $end = true) {
         $header = array(
             'c' => $this->getId(),
             'seq' => $this->getNextSequence(),
@@ -198,11 +198,11 @@ class Stream {
         return array_merge($header, $extra_headers);
     }
 
-    function getType() {
+    public function getType() {
         return $this->type;
     }
 
-    function isCustom() {
+    public function isCustom() {
         return $this->custom;
     }
 
@@ -210,11 +210,11 @@ class Stream {
      * Starts a stream by generating an initial request
      * @param array $args
      */
-    function start(array $args) {
+    public function start(array $args) {
         $this->send($this->getProcessor()->generate($args));
     }
 
-    function __toString() {
+    public function __toString() {
         return "#".$this->getId()." [S: ".$this->out_seq." A: ".$this->last_ack." E: ".($this->end ? "yes" : "no")."]\n";
     }
 

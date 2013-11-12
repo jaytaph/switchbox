@@ -7,7 +7,7 @@ class Mesh {
     protected $nodes = array();
 
 
-    function findByLine($line) {
+    public function findByLine($line) {
         foreach ($this->nodes as $node) {
             /** @var $node Node */
             //print "Node: ".$node->getName()." Line: ".$node->getLineOut()."\n";
@@ -18,7 +18,7 @@ class Mesh {
     /**
      * @param Node $node
      */
-    function addNode(Node $node) {
+    public function addNode(Node $node) {
         print "*** Adding node to mesh: ".$node->getName()."\n";
         $this->nodes[$node->getName()] = $node;
     }
@@ -27,23 +27,23 @@ class Mesh {
      * @param $name
      * @return bool
      */
-    function nodeExists($name) {
+    public function nodeExists($name) {
         return isset($this->nodes[$name]);
     }
 
-    function getConnectedNodes() {
+    public function getConnectedNodes() {
         return array_filter($this->nodes, function ($e) { /** @var $e Node */ return $e->isConnected(); });
     }
 
-    function getClosestForHash($hash, $limit = 3) {
+    public function getClosestForHash($hash, $limit = 3) {
         return array_slice($this->getOrderedNodes($hash), 0, $limit);
     }
 
-    function getAllNodes() {
+    public function getAllNodes() {
         return $this->nodes;
     }
 
-    function findMatchingNodes($partial_name) {
+    public function findMatchingNodes($partial_name) {
         // Find a collection of nodes that STARTS with the name
         $matched_nodes = array_filter($this->nodes, function ($e) use ($partial_name) {
             /** @var $e Node */
@@ -58,7 +58,7 @@ class Mesh {
      * @param bool $return_one_only
      * @return null|Node
      */
-    function getNode($name, $return_one_only = true) {
+    public function getNode($name, $return_one_only = true) {
         if ($this->nodeExists($name)) return $this->nodes[$name];
         return null;
     }
@@ -70,7 +70,7 @@ class Mesh {
      * @param Node $other
      * @param bool $force
      */
-    function bucketize(Node $self, Node $other, $force = false) {
+    public function bucketize(Node $self, Node $other, $force = false) {
     //        if (! $force && ! $other->getBucket()) return;
     //
     //        $hash_self = new Hash($self->getName());
@@ -82,7 +82,7 @@ class Mesh {
     /**
      * delete any dead hashnames
      */
-    function reap() {
+    public function reap() {
         // @TODO
     }
 
@@ -92,22 +92,22 @@ class Mesh {
      * @param $hash
      * @return null|Node
      */
-    function seen($hash) {
+    public function seen($hash) {
         return $this->getNode($hash);
     }
 
     // update which lines are elected to keep, rebuild self.buckets array
-    function elect() {
+    public function elect() {
         // @TODO
     }
 
     // every line that needs to be maintained, ping them
-    function ping() {
+    public function ping() {
         // @TODO
     }
 
 
-    function getOrderedNodes($hash = null) {
+    public function getOrderedNodes($hash = null) {
         $pq = new \SplPriorityQueue();
 
         if (is_string($hash)) {

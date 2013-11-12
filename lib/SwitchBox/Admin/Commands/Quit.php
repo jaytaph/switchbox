@@ -6,7 +6,7 @@ use SwitchBox\SwitchBox;
 
 class Quit implements iCmd {
 
-    function help()
+    public function help()
     {
         return array(
             "quit",
@@ -15,7 +15,7 @@ class Quit implements iCmd {
         );
     }
 
-    function execute(SwitchBox $switchbox, $sock, $args)
+    public function execute(SwitchBox $switchbox, $sock, $args)
     {
         $buf = "ktnxbai!\n";
         socket_write($sock, $buf, strlen($buf));

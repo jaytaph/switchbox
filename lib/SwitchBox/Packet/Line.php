@@ -22,7 +22,7 @@ class Line {
      * @throws \InvalidArgumentException
      * @throws \DomainException
      */
-    static function process(SwitchBox $switchbox, Packet $packet)
+    static public function process(SwitchBox $switchbox, Packet $packet)
     {
         $header = $packet->getHeader();
 
@@ -86,7 +86,7 @@ class Line {
      * @param Packet $inner_packet
      * @return Packet
      */
-    static function generate(SwitchBox $switchbox, Node $to, Packet $inner_packet)
+    static public function generate(SwitchBox $switchbox, Node $to, Packet $inner_packet)
     {
         $header = array(
             'type' => 'line',

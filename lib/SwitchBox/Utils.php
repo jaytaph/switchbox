@@ -4,11 +4,11 @@ namespace SwitchBox;
 
 class Utils {
 
-    static function bin2hex($str, $pad_length) {
+    static public function bin2hex($str, $pad_length) {
         return str_pad(bin2hex($str), $pad_length, "0", STR_PAD_RIGHT);
     }
 
-    static function hex2bin($str) {
+    static public function hex2bin($str) {
         if (function_exists( 'hex2bin')) {
             // When hash starts with leading 0's it gets cut away by PHP during string casting. Hurrah!
             while (strlen($str) < 32) $str = "0" . $str;
@@ -29,7 +29,7 @@ class Utils {
 
 
 
-    static function isHex($str) {
+    static public function isHex($str) {
         if (strspn($str, '0123456789abcdefABCDEF') != strlen($str)) return false;
         return true;
     }

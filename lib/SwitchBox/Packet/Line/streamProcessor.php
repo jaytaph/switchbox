@@ -12,12 +12,12 @@ abstract class streamProcessor {
     /** @var Stream */
     protected $stream;
 
-    function __construct(Stream $stream) {
+    public function __construct(Stream $stream) {
         $this->setStream($stream);
     }
 
-    abstract function processIncoming(Packet $packet);
-    abstract function generate(array $args);
+    abstract public function processIncoming(Packet $packet);
+    abstract public function generate(array $args);
 
     /**
      * @return mixed

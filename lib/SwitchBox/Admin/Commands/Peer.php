@@ -10,7 +10,7 @@ use SwitchBox\Packet\Line\Peer as LinePeer;
 
 class Peer implements iCmd {
 
-    function execute(SwitchBox $switchbox, $sock, $args)
+    public function execute(SwitchBox $switchbox, $sock, $args)
     {
         $nodes = $switchbox->getMesh()->findMatchingNodes($args[0]);
         if (count($nodes) == 0) {
@@ -39,7 +39,7 @@ class Peer implements iCmd {
         }
     }
 
-    function help()
+    public function help()
     {
         return array(
             "peer [node]",

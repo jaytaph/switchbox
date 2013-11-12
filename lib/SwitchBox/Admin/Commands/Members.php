@@ -9,7 +9,7 @@ use SwitchBox\Packet\Line\Chat as LineChat;
 
 class Members implements iCmd {
 
-    function execute(SwitchBox $switchbox, $sock, $args)
+    public function execute(SwitchBox $switchbox, $sock, $args)
     {
         list($room, $hash) = explode("@", $args[0]);
 
@@ -40,7 +40,7 @@ class Members implements iCmd {
         ));
     }
 
-    function help()
+    public function help()
     {
         return array(
             "members room@node",

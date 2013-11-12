@@ -16,7 +16,7 @@ class Hash {
 
     protected $hash;                        // actual hash as hex-string
 
-    function __construct($hash) {
+    public function __construct($hash) {
         if (! $this->isHash($hash)) {
             throw new \InvalidArgumentException("Hash is not a valid SHA1 hash");
         }
@@ -29,7 +29,7 @@ class Hash {
      * @param int $format
      * @return array|string
      */
-    function getHash($format = Hash::OUTPUT_HEX) {
+    public function getHash($format = Hash::OUTPUT_HEX) {
         if ($format == Hash::OUTPUT_BINARY) {
             return Utils::hex2bin($this->hash);
         }
@@ -51,7 +51,7 @@ class Hash {
      * @param $hash
      * @return bool
      */
-    static function isHash($hash) {
+    static public function isHash($hash) {
         if (strlen($hash) != self::HASH_SIZE) return false;
         return Utils::isHex($hash);
     }
@@ -61,7 +61,7 @@ class Hash {
      * @param Hash $other
      * @return int
      */
-    function distance(Hash $other) {
+    public function distance(Hash $other) {
         $sbtab = array(-1,0,1,1,2,2,2,2,3,3,3,3,3,3,3,3);
         $ret = 252;
 
@@ -86,7 +86,7 @@ class Hash {
      * @param Hash $other
      * @return int
      */
-    function compare(Hash $other) {
+    public function compare(Hash $other) {
         $s = $this->getHash(Hash::OUTPUT_BYTE_ARRAY);
         $d = $other->getHash(Hash::OUTPUT_BYTE_ARRAY);
 
@@ -103,7 +103,7 @@ class Hash {
      * @param Hash $other
      * @return Hash
      */
-    function binaryxor(Hash $other) {
+    public function binaryxor(Hash $other) {
         $s = $this->getHash(Hash::OUTPUT_BYTE_ARRAY);
         $d = $other->getHash(Hash::OUTPUT_BYTE_ARRAY);
 
@@ -121,7 +121,7 @@ class Hash {
      * @param Hash $other
      * @return bool
      */
-    function equals(Hash $other) {
+    public function equals(Hash $other) {
         return $this->compare($other) == 0;
     }
 
@@ -129,7 +129,7 @@ class Hash {
     /**
      * @return string
      */
-    function __toString() {
+    public function __toString() {
         return $this->getHash(Hash::OUTPUT_HEX);
     }
 

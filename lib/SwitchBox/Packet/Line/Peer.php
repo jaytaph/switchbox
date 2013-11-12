@@ -10,7 +10,7 @@ use SwitchBox\SwitchBox;
 class Peer extends streamProcessor {
 
 
-    function processIncoming(Packet $packet)
+    public function processIncoming(Packet $packet)
     {
         $header = $packet->getHeader();
         print ANSI_MAGENTA;
@@ -44,7 +44,7 @@ class Peer extends streamProcessor {
     }
 
 
-    function generate(array $args)
+    public function generate(array $args)
     {
         print "*** generate PEER\n";
         $hash = $args['hash'];

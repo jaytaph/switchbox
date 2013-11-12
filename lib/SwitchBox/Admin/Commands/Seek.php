@@ -9,7 +9,7 @@ use SwitchBox\Packet\Line\Seek as LineSeek;
 
 class seek implements iCmd {
 
-    function execute(SwitchBox $switchbox, $sock, $args)
+    public function execute(SwitchBox $switchbox, $sock, $args)
     {
         if ($args[0] == "all") {
             $nodes = $switchbox->getMesh()->getAllNodes();
@@ -41,7 +41,7 @@ class seek implements iCmd {
         }
     }
 
-    function help()
+    public function help()
     {
         return array(
             "seek [node|all]",

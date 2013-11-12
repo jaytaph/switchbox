@@ -88,7 +88,7 @@ class SwitchBox {
         $this->cmd_sock_clients = array();
     }
 
-    function getStartTime() {
+    public function getStartTime() {
         return $this->start_time;
     }
 
@@ -186,7 +186,7 @@ class SwitchBox {
         }
     }
 
-    function _loop_tcp_packets_admin_client($sock) {
+    protected  function _loop_tcp_packets_admin_client($sock) {
         $s = socket_read($sock, 2048);
         $s = trim($s);
 
@@ -211,7 +211,7 @@ class SwitchBox {
         }
     }
 
-    function _loop_tcp_packets_cmd_client($sock) {
+    public function _loop_tcp_packets_cmd_client($sock) {
         $json = socket_read($sock, 2048);
         $json = trim($json);
         $json = json_decode($json, true);
@@ -227,7 +227,7 @@ class SwitchBox {
         socket_write($sock, $buf, strlen($buf));
     }
 
-    function _loop_tcp_admin_packets($sock) {
+    protected function _loop_tcp_admin_packets($sock) {
         $sock = socket_accept($sock);
         $this->admin_sock_clients[] = $sock;
 
@@ -239,14 +239,14 @@ class SwitchBox {
         socket_write($sock, $buf, strlen($buf));
     }
 
-    function _loop_tcp_cmd_packets($sock) {
+    protected function _loop_tcp_cmd_packets($sock) {
         $sock = socket_accept($sock);
         $this->cmd_sock_clients[] = $sock;
     }
 
 
 
-    function _loop_udp_packets($sock) {
+    protected function _loop_udp_packets($sock) {
         $ip = ""; $port = 0;
         socket_recvfrom($sock, $buf, 2048, 0, $ip, $port);
         $a = bin2hex($buf);

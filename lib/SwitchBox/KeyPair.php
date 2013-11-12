@@ -66,9 +66,9 @@ class KeyPair {
     /**
      * @return mixed
      */
-    public function getPublicKey($format = KeyPair::FORMAT_PEM)
+    public function getPublicKey($format = self::FORMAT_PEM)
     {
-        if ($format == KeyPair::FORMAT_DER) {
+        if ($format == self::FORMAT_DER) {
             return self::convertPemToDer($this->public_key);
         }
         return $this->public_key;

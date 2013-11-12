@@ -6,7 +6,7 @@ use SwitchBox\SwitchBox;
 
 interface iCmd {
 
-    function execute(SwitchBox $switchbox, $sock, $args);
-    function help();
+    public function execute(SwitchBox $switchbox, $sock, $args);
+    public function help();
 
 }

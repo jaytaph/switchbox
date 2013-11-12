@@ -9,7 +9,7 @@ use SwitchBox\SwitchBox;
 
 class Seek extends streamProcessor {
 
-    function processIncoming(Packet $packet)
+    public function processIncoming(Packet $packet)
     {
         $header = $packet->getHeader();
         print ANSI_YELLOW;
@@ -58,7 +58,7 @@ class Seek extends streamProcessor {
     }
 
 
-    function generate(array $args)
+    public function generate(array $args)
     {
         print "*** generate SEEK\n";
         $hash = $args['hash'];

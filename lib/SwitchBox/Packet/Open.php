@@ -18,7 +18,7 @@ class Open {
      * @return null|Node
      * @throws \DomainException
      */
-    static function process(SwitchBox $switchbox, Packet $packet) {
+    static public function process(SwitchBox $switchbox, Packet $packet) {
         $header = $packet->getHeader();
         if ($header['type'] != "open") {
             throw new \DomainException("Not an OPEN packet");
@@ -147,7 +147,7 @@ class Open {
      * @return Packet
      * @throws \DomainException
      */
-    static function generate(SwitchBox $switchbox, Node $node, $family = null) {
+    static public function generate(SwitchBox $switchbox, Node $node, $family = null) {
         // 0. Setup some stuff
 
         $node->setLineOut(Utils::bin2hex(openssl_random_pseudo_bytes(16), 32));

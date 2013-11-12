@@ -9,7 +9,7 @@ use SwitchBox\Packet\Line\Chat as LineChat;
 
 class Chat implements iCmd {
 
-    function execute(SwitchBox $switchbox, $sock, $args)
+    public function execute(SwitchBox $switchbox, $sock, $args)
     {
         $hash = array_shift($args);
         $stream_id = array_shift($args);
@@ -41,7 +41,7 @@ class Chat implements iCmd {
         $stream->send(new Packet($switchbox, $header, null));
     }
 
-    function help()
+    public function help()
     {
         return array(
             "char [stream] [room@node] text",
