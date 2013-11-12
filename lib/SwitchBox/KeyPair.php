@@ -100,7 +100,7 @@ class KeyPair {
     static public function convertPemToDer($pem) {
         $matches = array();
         if (!preg_match('~^-----BEGIN ([A-Z ]+)-----\s*?([A-Za-z0-9+=/\r\n]+)\s*?-----END \1-----\s*$~D', $pem, $matches)) {
-            die('Invalid PEM format encountered.'.$pem."\n");
+            throw new \RuntimeException('Invalid PEM format encountered: '.$pem."\n");
         }
         $derData = str_replace(array("\r", "\n"), array('', ''), $matches[2]);
         $derData = base64_decode($derData);

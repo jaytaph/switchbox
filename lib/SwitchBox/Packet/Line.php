@@ -67,7 +67,6 @@ class Line {
                 default :
                     print ANSI_RED . "Unknown incoming type in line: ".print_r($inner_header, true).ANSI_RESET . "\n";
                     return;
-                    break;
             }
 
             print ANSI_YELLOW . "CREATED ".$stream->getType()." STREAM " . ANSI_RESET . "\n";
@@ -75,7 +74,6 @@ class Line {
 
         // Process already existing stream, make sure end/acks etc are done properly
         $stream->process($inner_packet);
-        return;
     }
 
     /**

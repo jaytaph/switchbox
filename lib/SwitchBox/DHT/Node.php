@@ -155,7 +155,7 @@ class Node {
         return isset($this->streams[$id]) ? $this->streams[$id] : null;
     }
 
-    function addStream(Stream $stream) {
+    public function addStream(Stream $stream) {
         $this->streams[$stream->getId()] = $stream;
     }
 
