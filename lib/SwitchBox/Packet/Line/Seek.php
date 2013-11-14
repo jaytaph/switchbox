@@ -63,7 +63,7 @@ class Seek extends streamProcessor {
         print "*** generate SEEK\n";
         $hash = $args['hash'];
 
-        $header = $this->getStream()->createOutStreamHeader('seek', array('seek' => $hash));
+        $header = $this->getStream()->createOutStreamHeader('seek', array('seek' => $hash), false);
         return new Packet($this->getSwitchBox(), $header, null);
     }
 

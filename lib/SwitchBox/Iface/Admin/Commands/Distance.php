@@ -1,6 +1,6 @@
 <?php
 
-namespace SwitchBox\Admin\Commands;
+namespace SwitchBox\Iface\Admin\Commands;
 
 use SwitchBox\DHT\Node;
 use SwitchBox\SwitchBox;
@@ -18,11 +18,11 @@ class distance implements iCmd {
         }
     }
 
-    public function help()
+    public function getHelp()
     {
         return array(
-            "closest ",
-            "display hashes distan",
+            "closest <node>",
+            "display hashes distance between node and ourselve",
             "No additional help",
         );
     }

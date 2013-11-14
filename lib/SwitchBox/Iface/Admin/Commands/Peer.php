@@ -1,6 +1,6 @@
 <?php
 
-namespace SwitchBox\Admin\Commands;
+namespace SwitchBox\Iface\Admin\Commands;
 
 use SwitchBox\DHT\Node;
 use SwitchBox\Stream;
@@ -39,7 +39,7 @@ class Peer implements iCmd {
         }
     }
 
-    public function help()
+    public function getHelp()
     {
         return array(
             "peer [node]",

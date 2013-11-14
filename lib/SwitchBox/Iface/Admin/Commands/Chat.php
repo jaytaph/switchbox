@@ -1,6 +1,6 @@
 <?php
 
-namespace SwitchBox\Admin\Commands;
+namespace SwitchBox\Iface\Admin\Commands;
 
 use SwitchBox\Packet;
 use SwitchBox\Stream;
@@ -41,10 +41,10 @@ class Chat implements iCmd {
         $stream->send(new Packet($switchbox, $header, null));
     }
 
-    public function help()
+    public function getHelp()
     {
         return array(
-            "char [stream] [room@node] text",
+            "chat [stream] [room@node] text",
             "peers to a nodename",
             "Node can be just the start of a node name. It will connect to all matching nodes.",
         );

@@ -1,6 +1,6 @@
 <?php
 
-namespace SwitchBox\Admin\Commands;
+namespace SwitchBox\Iface\Admin\Commands;
 
 use SwitchBox\SwitchBox;
 
@@ -17,7 +17,7 @@ class Whoami implements iCmd {
         socket_write($sock, $buf, strlen($buf));
     }
 
-    public function help()
+    public function getHelp()
     {
         return array(
             "whoami",

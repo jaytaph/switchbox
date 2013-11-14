@@ -36,7 +36,8 @@ class Hash {
 
         if ($format == self::OUTPUT_BYTE_ARRAY) {
             $tmp = array();
-            for ($i=0; $i!=strlen($this->hash); $i++) {
+            $len = strlen($this->hash);
+            for ($i=0; $i!=$len; $i++) {
                 $tmp[] = hexdec($this->hash[$i]);
             }
             return array_reverse($tmp);

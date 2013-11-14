@@ -215,7 +215,7 @@ class Stream {
     }
 
     public function __toString() {
-        return "#".$this->getId()." [S: ".$this->out_seq." A: ".$this->last_ack." E: ".($this->end ? "yes" : "no")."]\n";
+        return "#".$this->getId()." [Seq: ".$this->out_seq." Acked: ".$this->last_ack." End: ".($this->end ? "yes" : "no")."]\n";
     }
 
 }

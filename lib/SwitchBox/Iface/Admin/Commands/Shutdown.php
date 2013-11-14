@@ -1,12 +1,12 @@
 <?php
 
-namespace SwitchBox\Admin\Commands;
+namespace SwitchBox\Iface\Admin\Commands;
 
 use SwitchBox\SwitchBox;
 
 class Shutdown implements iCmd {
 
-    public function help()
+    public function getHelp()
     {
         return array(
             "shutdown",

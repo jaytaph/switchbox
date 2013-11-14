@@ -1,6 +1,6 @@
 <?php
 
-namespace SwitchBox\Admin\Commands;
+namespace SwitchBox\Iface\Admin\Commands;
 
 use SwitchBox\Stream;
 use SwitchBox\SwitchBox;
@@ -40,11 +40,11 @@ class Members implements iCmd {
         ));
     }
 
-    public function help()
+    public function getHelp()
     {
         return array(
-            "members room@node",
-            "find members of room",
+            "members [room@node]",
+            "CHAT: find members of room",
             "No additional help available",
         );
     }

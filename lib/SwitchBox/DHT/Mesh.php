@@ -2,9 +2,27 @@
 
 namespace SwitchBox\DHT;
 
-class Mesh {
+use SwitchBox\iSockHandler;
+use SwitchBox\Packet;
+use SwitchBox\Packet\Line;
+use SwitchBox\Packet\Open;
+use SwitchBox\Stream;
+use SwitchBox\SwitchBox;
+
+class Mesh implements iSockHandler {
 
     protected $nodes = array();
+
+    /** @var resource UDP socket connecting to mesh */
+    protected $sock;
+
+
+    function __construct($udp_port = 42424) {
+        // Setup UDP mesh socket
+        $this->sock = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
+        socket_set_nonblock($this->sock);
+        socket_bind($this->sock, 0, $udp_port);
+    }
 
 
     public function findByLine($line) {
@@ -115,10 +133,86 @@ class Mesh {
         }
 
         foreach ($this->getAllNodes() as $node) {
-            $pq->insert($node, $node->getHash()->distance($hash));
+            /** @var $node Hash */
+            $pq->insert($node, $node->distance($hash));
         }
 
         return array_reverse(iterator_to_array($pq));
+    }
+
+
+    public function send($packet, $ip, $port) {
+        print "Sending packet to ".$ip.":".$port."\n";
+        socket_sendto($this->sock, $packet, strlen($packet), 0, $ip, $port);
+    }
+
+    public function getSelectSockets()
+    {
+        return array($this->sock);
+    }
+
+    public function handle(SwitchBox $switchbox, $sock)
+    {
+        if ($sock == $this->sock) {
+            $this->_handleSocket($switchbox, $sock);
+        }
+    }
+
+    protected function _handleSocket(SwitchBox $switchbox, $sock) {
+        $ip = "";
+        $port = 0;
+        socket_recvfrom($sock, $buf, 2048, 0, $ip, $port);
+        print "loop() Connection from: $ip : $port (".strlen($buf)."/".strlen(bin2hex($buf))." bytes)\n";
+
+        // Check if we received something from ourselves. If so, skip
+        if ($ip == $switchbox->getSelfNode()->getIp() && $port == $switchbox->getSelfNode()->getPort()) {
+            print "Loop() received data from self. Skipping!\n";
+            return;
+        }
+
+        // Decode the packet
+        $packet = Packet::decode($switchbox, $buf, $ip, $port);
+        if ($packet == NULL) {
+            print "loop() Unknown data. Not a packet!\n";
+            return;
+        }
+
+        print "loop() Incoming '".ANSI_WHITE . $packet->getType(true). ANSI_RESET."' packet from ".$packet->getFromIp().":".$packet->getFromPort()."\n";
+
+        // @TODO: Packet should already have its processor:
+        // $packet->process($switchbox);
+
+        if ($packet->getType() == Packet::TYPE_PING) {
+            // Do nothing..
+            return;
+        }
+
+        if ($packet->getType() == Packet::TYPE_OPEN) {
+            $node = Open::process($switchbox, $packet);
+
+            if ($node->isConnected()) {
+                print ANSI_GREEN."Finalized connection with ".(string)$node."!!!!!".ANSI_RESET."\n";
+                print_r($node->getInfo());
+
+                // Try and do a seek to ourselves, this allows us to find our outside IP/PORT
+                $stream = new Stream($switchbox, $node);
+                $stream->addProcessor("seek", new Line\Seek($stream));
+                $stream->start(array(
+                    'hash' => $switchbox->getSelfNode()->getName(),
+                ));
+            } else {
+                print ANSI_YELLOW."Node ".(string)$node." is not yet connected. ".ANSI_RESET."\n";
+                $switchbox->getTxQueue()->enqueue_packet($node, Open::generate($switchbox, $node, null));
+            }
+
+            return;
+        }
+        if ($packet->getType() == Packet::TYPE_LINE) {
+            Line::process($switchbox, $packet);
+            return;
+        }
+
+        printf ("loop() Cannot decode this type of packet yet :(\n");
     }
 
 }

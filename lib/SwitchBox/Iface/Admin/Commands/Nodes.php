@@ -1,6 +1,6 @@
 <?php
 
-namespace SwitchBox\Admin\Commands;
+namespace SwitchBox\Iface\Admin\Commands;
 
 use SwitchBox\DHT\Node;
 use SwitchBox\SwitchBox;
@@ -24,7 +24,7 @@ class Nodes implements iCmd {
         }
     }
 
-    public function help()
+    public function getHelp()
     {
         return array(
             "nodes",

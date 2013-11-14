@@ -1,6 +1,6 @@
 <?php
 
-namespace Switchbox\Comm\Commands;
+namespace Switchbox\Iface\Json\Commands;
 
 class Info {
 

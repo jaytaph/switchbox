@@ -1,12 +1,12 @@
 <?php
 
-namespace SwitchBox\Admin\Commands;
+namespace SwitchBox\Iface\Admin\Commands;
 
 use SwitchBox\SwitchBox;
 
 interface iCmd {
 
     public function execute(SwitchBox $switchbox, $sock, $args);
-    public function help();
+    public function getHelp();
 
 }
