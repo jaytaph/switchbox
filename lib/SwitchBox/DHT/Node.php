@@ -8,7 +8,7 @@ use phpecc\Point;
 use phpecc\PrivateKey;
 use phpecc\PublicKey;
 use phpecc\Utilities\Gmp;
-use SwitchBox\KeyPair;
+use SwitchBox\DHT\KeyPair;
 use SwitchBox\Stream;
 use SwitchBox\Utils;
 

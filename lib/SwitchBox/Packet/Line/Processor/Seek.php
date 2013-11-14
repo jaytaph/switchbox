@@ -1,13 +1,13 @@
 <?php
 
-namespace SwitchBox\Packet\Line;
+namespace SwitchBox\Packet\Line\Processor;
 
 use SwitchBox\DHT\Node;
 use SwitchBox\Packet;
 use SwitchBox\Stream;
 use SwitchBox\SwitchBox;
 
-class Seek extends streamProcessor {
+class Seek extends StreamProcessor {
 
     public function processIncoming(Packet $packet)
     {

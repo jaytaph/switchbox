@@ -4,15 +4,41 @@ namespace SwitchBox\Packet;
 
 use SwitchBox\DHT\Node;
 use SwitchBox\Packet;
-use SwitchBox\Packet\Line\Connect;
-use SwitchBox\Packet\Line\Peer;
-use SwitchBox\Packet\Line\Seek;
+use SwitchBox\Packet\Line\Processor\Connect;
+use SwitchBox\Packet\Line\Processor\Peer;
+use SwitchBox\Packet\Line\Processor\Seek;
+use SwitchBox\Packet\Line\Processor\Custom;
+use SwitchBox\Packet\Line\Processor\StreamProcessor;
 use SwitchBox\Stream;
 use SwitchBox\SwitchBox;
 use SwitchBox\Utils;
-use SwitchBox\KeyPair;
 
-class Line {
+class Line extends PacketHandler {
+
+    /** @var StreamProcessor[] */
+    protected $stream_processors = array();
+
+    function __construct(SwitchBox $switchbox)
+    {
+        parent::__construct($switchbox);
+
+        $this->addStreamProcessor("connect", new Connect());
+        $this->addStreamProcessor("peer", new Peer());
+        $this->addStreamProcessor("seek", new Seek());
+        $this->addStreamProcessor("custom", new Custom());
+    }
+
+    function addStreamProcessor($type, StreamProcessor $processor) {
+        $this->stream_processors[$type] = $processor;
+    }
+
+    function getStreamProcessor($type) {
+        if (isset($this->stream_processors[$type])) {
+            return $this->stream_processors[$type];
+        }
+        return null;
+    }
+
 
     /**
      * Process a line packet by decoding and passing it to the correct stream-handler
@@ -22,7 +48,7 @@ class Line {
      * @throws \InvalidArgumentException
      * @throws \DomainException
      */
-    static public function process(SwitchBox $switchbox, Packet $packet)
+    public function process(Packet $packet)
     {
         $header = $packet->getHeader();
 
@@ -32,7 +58,7 @@ class Line {
         }
 
         // Find our node
-        $from = $switchbox->getMesh()->findByLine($header['line']);
+        $from = $this->getSwitchBox()->getMesh()->findByLine($header['line']);
         if (! $from) {
             print "Cannot find matching node for line ".$header['line'];
             return;
@@ -43,12 +69,12 @@ class Line {
         $cipher->setIv(Utils::hex2bin($header['iv']));
         $cipher->setKey($from->getDecryptionKey());
 //        print "Decrypting with IV/KEY: ".$header['iv']." / ".bin2hex($from->getDecryptionKey())."\n";
-        $inner_packet = Packet::decode($switchbox, $cipher->decrypt($packet->getBody()));
+        $inner_packet = Packet::decode($this->getSwitchBox(), $cipher->decrypt($packet->getBody()));
 
         $inner_header = $inner_packet->getHeader();
         $stream = $from->getStream($inner_header['c']);
         if (! $stream) {
-            $stream = new Stream($switchbox, $from, $inner_header['c']);
+            $stream = new Stream($this->getSwitchBox(), $from, $inner_header['c']);
 
             // There is an incoming request. We must respond to it
             print "No stream found. Creating new stream...\n";
@@ -102,6 +128,5 @@ class Line {
 
         return new Packet($switchbox, $header, $body);
     }
-
 
 }

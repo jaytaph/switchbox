@@ -1,13 +1,13 @@
 <?php
 
-namespace SwitchBox\Packet\Line;
+namespace SwitchBox\Packet\Line\Processor;
 
 use SwitchBox\DHT\Node;
 use SwitchBox\Packet;
 use SwitchBox\Stream;
 use SwitchBox\SwitchBox;
 
-class Chat extends streamProcessor {
+class Members extends StreamProcessor {
 
     public function processIncoming(Packet $packet)
     {
@@ -20,9 +20,9 @@ class Chat extends streamProcessor {
 
     public function generate(array $args)
     {
-        print "*** generate CHAT\n";
+        print "*** generate MEMBERS\n";
 
-        $header = $this->getStream()->createOutStreamHeader('_chat', array('_' => $args), false);
+        $header = $this->getStream()->createOutStreamHeader('_members', array('_' => $args), false);
         print_r($header);
         return new Packet($this->getSwitchBox(), $header, null);
     }

@@ -2,8 +2,6 @@
 
 namespace SwitchBox\Iface;
 
-use SwitchBox\iSockHandler;
-
 abstract class Sock implements iSockHandler {
     protected $sock_clients = array();
     protected $sock;

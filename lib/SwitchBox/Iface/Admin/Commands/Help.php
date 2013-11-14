@@ -24,8 +24,8 @@ class Help implements iCmd {
     {
         return array(
             "help <command>",
-            "Displays help on all commands. Type 'help <command>' for additional help",
-            "No additional help",
+            "Displays help on all commands.",
+            "Type 'help <command>' for additional help",
         );
     }
 

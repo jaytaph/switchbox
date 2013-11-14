@@ -1,6 +1,8 @@
 <?php
 
-namespace SwitchBox;
+namespace SwitchBox\Iface;
+
+use SwitchBox\SwitchBox;
 
 interface iSockHandler {
 

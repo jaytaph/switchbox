@@ -1,20 +1,16 @@
 <?php
 
-namespace SwitchBox\Packet\Line;
+namespace SwitchBox\Packet\Line\Processor;
 
 
 use SwitchBox\Packet;
 use SwitchBox\Stream;
 use SwitchBox\SwitchBox;
 
-abstract class streamProcessor {
+abstract class StreamProcessor {
 
     /** @var Stream */
     protected $stream;
-
-    public function __construct(Stream $stream) {
-        $this->setStream($stream);
-    }
 
     abstract public function processIncoming(Packet $packet);
     abstract public function generate(array $args);

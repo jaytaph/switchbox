@@ -1,11 +1,6 @@
 <?php
 
-namespace SwitchBox;
-
-/*
- * Not much to see here, but we could add PEM2DER conversions etc..
- */
-
+namespace SwitchBox\DHT;
 
 class KeyPair {
     protected $private_key;

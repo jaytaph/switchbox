@@ -3,22 +3,21 @@
 namespace SwitchBox\Packet;
 
 use SwitchBox\DHT\Node;
-use SwitchBox\KeyPair;
+use SwitchBox\DHT\KeyPair;
 use SwitchBox\SwitchBox;
 use SwitchBox\Utils;
 use SwitchBox\Packet;
 
-class Open {
+class Open extends PacketHandler {
 
     /**
      * Process an open packet
      *
-     * @param SwitchBox $switchbox
      * @param Packet $packet
      * @return null|Node
      * @throws \DomainException
      */
-    static public function process(SwitchBox $switchbox, Packet $packet) {
+    public function process(Packet $packet) {
         $header = $packet->getHeader();
         if ($header['type'] != "open") {
             throw new \DomainException("Not an OPEN packet");
@@ -29,7 +28,7 @@ class Open {
         }
 
         $open = base64_decode($header['open']);
-        openssl_private_decrypt($open, $eccpubkey, $switchbox->getKeyPair()->getPrivateKey(), OPENSSL_PKCS1_OAEP_PADDING);
+        openssl_private_decrypt($open, $eccpubkey, $this->getSwitchBox()->getKeyPair()->getPrivateKey(), OPENSSL_PKCS1_OAEP_PADDING);
         if (! $eccpubkey) {
             throw new \DomainException("couldn't decrypt open");
         }
@@ -45,9 +44,9 @@ class Open {
         $cipher->setKey($hash);
         $body = $cipher->decrypt($packet->getBody());
 
-        $innerPacket = Packet::decode($switchbox, $body);
+        $innerPacket = Packet::decode($this->getSwitchBox(), $body);
 
-        $hash = hash('sha256', $switchbox->getKeyPair()->getPublicKey(KeyPair::FORMAT_DER));
+        $hash = hash('sha256', $this->getSwitchBox()->getKeyPair()->getPublicKey(KeyPair::FORMAT_DER));
         $innerHeader = $innerPacket->getHeader();
         if ($innerHeader['to'] != $hash) {
             throw new \DomainException("open for wrong hashname");
@@ -101,11 +100,11 @@ class Open {
         }
 
         // Do we know this node or not?
-        $node = $switchbox->getMesh()->seen(Utils::bin2hex($hash, 64));
+        $node = $this->getSwitchBox()->getMesh()->seen(Utils::bin2hex($hash, 64));
         if (! $node) {
             // New node, let's create it
             $node = new Node($packet->getFromIp(), $packet->getFromPort(), KeyPair::convertDerToPem($key), hash('sha256', $innerPacket->getBody()));
-            $switchbox->getMesh()->addNode($node);
+            $this->getSwitchBox()->getMesh()->addNode($node);
         }
 
         // We also found the public key, so set it.
@@ -126,12 +125,29 @@ class Open {
 //            print_r($node->getInfo());
 //            print ANSI_RESET;
 //
-//            $switchbox->getTxQueue()->enqueue_packet($node, Open::generate($switchbox, $node, null));
+//            $this->getSwitchBox()->getTxQueue()->enqueue_packet($node, Open::generate($this->getSwitchBox(), $node, null));
 //        }
 
         // we have an open line to the other side..
         $node->setLineIn($innerHeader['line']);
         $node->recalcEncryptionKeys();
+
+
+
+        if ($node->isConnected()) {
+            print ANSI_GREEN."Finalized connection with ".(string)$node."!!!!!".ANSI_RESET."\n";
+            print_r($node->getInfo());
+
+            // Try and do a seek to ourselves, this allows us to find our outside IP/PORT
+                    $stream = new Stream($this->getSwitchBox(), $node);
+            $stream->addProcessor("seek", new Line\Seek($stream));
+            $stream->start(array(
+                'hash' => $this->getSwitchBox()->getSelfNode()->getName(),
+            ));
+        } else {
+            print ANSI_YELLOW."Node ".(string)$node." is not yet connected. ".ANSI_RESET."\n";
+            $this->getSwitchBox()->getTxQueue()->enqueue_packet($node, Open::generate($this->getSwitchBox(), $node, null));
+        }
 
         return $node;
     }

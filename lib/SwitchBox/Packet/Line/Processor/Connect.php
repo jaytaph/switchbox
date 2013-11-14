@@ -1,15 +1,13 @@
 <?php
 
-namespace SwitchBox\Packet\Line;
+namespace SwitchBox\Packet\Line\Processor;
 
 use SwitchBox\DHT\Node;
 use SwitchBox\Packet;
 use SwitchBox\Packet\Open;
-use SwitchBox\KeyPair;
-use SwitchBox\Stream;
-use SwitchBox\SwitchBox;
+use SwitchBox\DHT\KeyPair;
 
-class Connect extends streamProcessor {
+class Connect extends StreamProcessor {
 
 
     public function processIncoming(Packet $packet)
