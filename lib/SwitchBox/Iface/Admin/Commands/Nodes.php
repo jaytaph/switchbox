@@ -12,7 +12,6 @@ class Nodes implements iCmd {
     {
         $i = 0;
         foreach ($switchbox->getMesh()->getAllNodes() as $node) {
-            /** @var $node Node */
             $buf = sprintf(ANSI_WHITE."#%-3d ".ANSI_BLUE . "%15s ".ANSI_GREEN . "%5d".ANSI_RESET." | ".ANSI_YELLOW."%-50s".ANSI_RESET." | ".ANSI_WHITE."%s%s%s".ANSI_RESET."\n",
                 $i++,
                 $node->getIp(), $node->getPort(), $node->getName(),

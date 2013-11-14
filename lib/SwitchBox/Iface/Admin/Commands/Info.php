@@ -38,7 +38,7 @@ class Info implements iCmd {
         $buf = "Avaliable streams:\n";
         socket_write($sock, $buf, strlen($buf));
         foreach ($node->getStreams() as $stream) {
-            $buf = $stream;
+            $buf = "  " . $stream;
             socket_write($sock, $buf, strlen($buf));
         }
 

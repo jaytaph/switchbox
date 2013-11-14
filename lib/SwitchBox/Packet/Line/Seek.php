@@ -30,7 +30,6 @@ class Seek extends streamProcessor {
     protected function _seek($line) {
         $nodes = array();
         foreach ($this->getSwitchBox()->getMesh()->getClosestForHash($line, 5) as $node) {
-            /** @var $node Node */
             $nodes[] = $node->getName() . "," . $node->getIp() . "," . $node->getPort();
         }
 

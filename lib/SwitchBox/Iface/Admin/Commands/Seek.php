@@ -31,8 +31,6 @@ class seek implements iCmd {
     protected function _seek(SwitchBox $switchbox, $hash) {
         // Find the closest connected nodes for the given hash, and ask if they know about $hash
         foreach ($switchbox->getMesh()->getClosestForHash($hash) as $node) {
-            /** @var $node Node */
-
             $stream = new Stream($switchbox, $node);
             $stream->addProcessor("seek", new LineSeek($stream));
             $stream->start(array(

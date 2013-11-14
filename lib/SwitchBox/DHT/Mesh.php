@@ -26,8 +26,7 @@ class Mesh implements iSockHandler {
 
 
     public function findByLine($line) {
-        foreach ($this->nodes as $node) {
-            /** @var $node Node */
+        foreach ($this->getAllnodes() as $node) {
             //print "Node: ".$node->getName()." Line: ".$node->getLineOut()."\n";
             if ($node->getLineOut() == $line) return $node;
         }
@@ -49,22 +48,27 @@ class Mesh implements iSockHandler {
         return isset($this->nodes[$name]);
     }
 
+    /**
+     * @return Node[]
+     */
     public function getConnectedNodes() {
-        return array_filter($this->nodes, function ($e) { /** @var $e Node */ return $e->isConnected(); });
+        return array_filter($this->nodes, function (Node $e) { return $e->isConnected(); });
     }
 
     public function getClosestForHash($hash, $limit = 3) {
         return array_slice($this->getOrderedNodes($hash), 0, $limit);
     }
 
+    /**
+     * @return Node[]
+     */
     public function getAllNodes() {
         return $this->nodes;
     }
 
     public function findMatchingNodes($partial_name) {
         // Find a collection of nodes that STARTS with the name
-        $matched_nodes = array_filter($this->nodes, function ($e) use ($partial_name) {
-            /** @var $e Node */
+        $matched_nodes = array_filter($this->nodes, function (Node $e) use ($partial_name) {
             return strpos($e->getName(), $partial_name) === 0;
         });
 
@@ -125,6 +129,10 @@ class Mesh implements iSockHandler {
     }
 
 
+    /**
+     * @param null $hash
+     * @return Node[]
+     */
     public function getOrderedNodes($hash = null) {
         $pq = new \SplPriorityQueue();
 
@@ -133,8 +141,7 @@ class Mesh implements iSockHandler {
         }
 
         foreach ($this->getAllNodes() as $node) {
-            /** @var $node Hash */
-            $pq->insert($node, $node->distance($hash));
+            $pq->insert($node, $hash->distance($node->getHash()));
         }
 
         return array_reverse(iterator_to_array($pq));

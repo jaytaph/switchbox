@@ -10,7 +10,6 @@ class distance implements iCmd {
     public function execute(SwitchBox $switchbox, $sock, $args)
     {
         foreach ($switchbox->getMesh()->getOrderedNodes($switchbox->getSelfNode()->getHash()) as $node) {
-            /** @var $node Node */
             $me_hash = $switchbox->getSelfNode()->getHash();
             $they_hash = $node->getHash();
             $buf = sprintf ("%s %s : %d\n", (string)$me_hash, (string)$they_hash, $me_hash->distance($they_hash));

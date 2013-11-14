@@ -25,7 +25,6 @@ class Peer implements iCmd {
 
             // Ask (all!??) nodes to let destination connect to use
             foreach ($switchbox->getMesh()->getConnectedNodes() as $node) {
-                /** @var $node Node */
 
                 // Don't ask ourselves.
                 if ($node->getName() == $switchbox->getSelfNode()->getName()) continue;

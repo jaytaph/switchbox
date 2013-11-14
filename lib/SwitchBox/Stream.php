@@ -34,6 +34,8 @@ class Stream {
     /** @var iLineProcessor */
     protected $processor;               // Processor to process the packets in this stream
 
+    protected $last_activity_ts;        // last time there was activity on this stream
+
     protected $end = false;
 
     const MAX_BACKLOG       = 100;      // Maximum number of unacknowledged packets
@@ -44,6 +46,8 @@ class Stream {
         print "New Stream ID: ".$this->id."\n";
         $this->to = $to;
         $this->switchbox = $switchbox;
+
+        $this->last_activity_ts = time();
 
         $this->in_queue = array();
         $this->out_queue = array();
@@ -147,6 +151,8 @@ class Stream {
      * Processes a packet that is part of a stream.
      */
     public function process(Packet $packet) {
+        $this->last_activity_ts = time();
+
         print "Processing packet on stream ".$this->getId()."\n";
         $header = $packet->getHeader();
 
@@ -178,16 +184,20 @@ class Stream {
         // We can end the stream, and delete it and stuff
         if (isset($header['end']) && $header['end']) {
             $this->end = true;
-            //$this->getTo()->removeStream($this);
+            $this->getTo()->removeStream($this);
         }
     }
 
     public function send(Packet $inner_packet) {
+        $this->last_activity_ts = time();
+
         $packet = Line::generate($this->getSwitchBox(), $this->getTo(), $inner_packet);
         $this->getSwitchBox()->getTxQueue()->enqueue_packet($this->getTo(), $packet);
     }
 
     public function createOutStreamHeader($type, $extra_headers, $end = true) {
+        $this->last_activity_ts = time();
+
         $header = array(
             'c' => $this->getId(),
             'seq' => $this->getNextSequence(),
@@ -214,8 +224,12 @@ class Stream {
         $this->send($this->getProcessor()->generate($args));
     }
 
+    public function getIdleTime() {
+        return time() - $this->last_activity_ts;
+    }
+
     public function __toString() {
-        return "#".$this->getId()." [Seq: ".$this->out_seq." Acked: ".$this->last_ack." End: ".($this->end ? "yes" : "no")."]\n";
+        return $this->getId()." [Seq: ".$this->out_seq." Acked: ".$this->last_ack." Ended: ".($this->end ? "yes" : "no")."  Idle: ".$this->getIdleTime()."]\n";
     }
 
 }

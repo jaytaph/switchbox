@@ -27,7 +27,8 @@ define('ANSI_WHITE',   "\x1b[37;1m");
 
 
 class SwitchBox {
-    const SELECT_TIMEOUT        = 5;        // Nr of seconds before socket_select() will timeout to do housekeeping
+    const SELECT_TIMEOUT            = 5;        // Nr of seconds before socket_select() will timeout to do housekeeping
+    const MAX_IDLE_STREAM_TIME      = 15;       // Nr of seconds a stream can be idle before it's closed
 
     /** @var \SwitchBox\KeyPair */
     protected $keypair;
@@ -189,23 +190,23 @@ class SwitchBox {
 
 
     public function doMaintenance() {
-//        print ANSI_CYAN . "*** Maintenance Start". ANSI_RESET . "\n";
+        print ANSI_CYAN . "*** Maintenance Start". ANSI_RESET . "\n";
 //        $this->_seekNodes();
-//        $this->_connectToNodes();
-//        print ANSI_CYAN . "*** Maintenance End". ANSI_RESET . "\n";
+        $this->_connectToNodes();
+        $this->_closeIdleStreams();
+        print ANSI_CYAN . "*** Maintenance End". ANSI_RESET . "\n";
     }
 
     protected function _seekNodes() {
         $hashes = array();
-        foreach ($this->getMesh()->getAllNodes() as $node) {
-            /** @var $node Node */
-            $hashes[] = $node->getName();
-        }
+//        foreach ($this->getMesh()->getAllNodes() as $node) {
+//            $hashes[] = $node->getName();
+//        }
+
+        $hashes[] = $this->getSelfNode()->getName();
 
         foreach ($hashes as $hash) {
             foreach ($this->getMesh()->getClosestForHash($hash) as $node) {
-                /** @var $node Node */
-
                 $stream = new Stream($this, $node);
                 $stream->addProcessor("seek", new LineSeek($stream));
                 $stream->start(array('hash' => $hash));
@@ -218,7 +219,6 @@ class SwitchBox {
         // Find all nodes that aren't connected yet
         $nodes = array();
         foreach ($this->getMesh()->getAllNodes() as $node) {
-            /** @var $node Node */
             if ($node->isConnected()) continue;
             if ($node->getName() == $this->getSelfNode()->getName()) continue;
             $nodes[] = $node;
@@ -230,7 +230,6 @@ class SwitchBox {
 
             // Ask (all!??) nodes to let destination connect to use
             foreach ($this->getMesh()->getConnectedNodes() as $seed) {
-                /** @var $seed Node */
 
                 // Don't ask ourselves.
                 if ($seed->getName() == $this->getSelfNode()->getName()) continue;
@@ -238,6 +237,20 @@ class SwitchBox {
                 $stream = new Stream($this, $seed);
                 $stream->addProcessor("peer", new LinePeer($stream));
                 $stream->start(array('hash' => $node->getName()));
+            }
+        }
+    }
+
+    /**
+     *
+     */
+    protected function _closeIdleStreams() {
+        foreach ($this->getMesh()->getAllNodes() as $node) {
+            foreach ($node->getStreams() as $stream) {
+                // No activity since 30 seconds, we should close the stream
+                if ($stream->getIdleTime() > self::MAX_IDLE_STREAM_TIME) {
+                    $node->removeStream($stream);
+                }
             }
         }
     }
