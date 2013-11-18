@@ -21,7 +21,7 @@ class Admin extends SockHandler {
      * @param SwitchBox $switchbox
      * @param $tcp_port
      */
-    function __construct(SwitchBox $switchbox, $tcp_port) {
+    public function __construct(SwitchBox $switchbox, $tcp_port) {
         $this->sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
         socket_set_option($this->sock, SOL_SOCKET, SO_REUSEADDR, 1);
 

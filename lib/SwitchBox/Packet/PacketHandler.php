@@ -14,7 +14,7 @@ abstract class PacketHandler {
      *
      * @param SwitchBox $switchbox
      */
-    function __construct(SwitchBox $switchbox) {
+    public function __construct(SwitchBox $switchbox) {
         $this->switchbox = $switchbox;
     }
 

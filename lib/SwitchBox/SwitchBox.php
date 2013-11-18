@@ -164,7 +164,7 @@ class SwitchBox {
      * @param $type
      * @param iSockHandler $handler
      */
-    function addSocketHandler($type, iSockHandler $handler) {
+    public function addSocketHandler($type, iSockHandler $handler) {
         $this->socket_handlers[$type] = $handler;
     }
 
@@ -172,7 +172,7 @@ class SwitchBox {
     /**
      * @return iSockHandler[]
      */
-    function getSocketHandlers() {
+    public function getSocketHandlers() {
         return $this->socket_handlers;
     }
 
@@ -181,7 +181,7 @@ class SwitchBox {
      * @param $type
      * @return iSockHandler
      */
-    function getSocketHandler($type) {
+    public function getSocketHandler($type) {
         if (isset($this->socket_handlers[$type])) {
             return $this->socket_handlers[$type];
         }

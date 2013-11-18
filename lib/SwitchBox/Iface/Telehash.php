@@ -23,7 +23,7 @@ class Telehash extends SockHandler {
      * @param SwitchBox $switchbox
      * @param $udp_port
      */
-    function __construct(Switchbox $switchbox, $udp_port) {
+    public function __construct(Switchbox $switchbox, $udp_port) {
         $this->switchbox = $switchbox;
 
         // Setup UDP mesh socket
@@ -108,7 +108,7 @@ class Telehash extends SockHandler {
      * @param $type
      * @return StreamProcessor
      */
-    function getPacketHandler($type) {
+    public function getPacketHandler($type) {
         if (isset($this->packet_handlers[$type])) {
             return $this->packet_handlers[$type];
         }
