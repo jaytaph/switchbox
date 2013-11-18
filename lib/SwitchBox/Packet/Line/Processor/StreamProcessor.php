@@ -20,7 +20,7 @@ abstract class StreamProcessor {
     /**
      * @param $stream
      */
-    function __construct(Stream $stream)
+    public function __construct(Stream $stream)
     {
         $this->stream = $stream;
     }

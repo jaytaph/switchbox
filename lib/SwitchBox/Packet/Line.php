@@ -20,7 +20,7 @@ class Line extends PacketHandler {
     /**
      * @param SwitchBox $switchbox
      */
-    function __construct(SwitchBox $switchbox)
+    public function __construct(SwitchBox $switchbox)
     {
         parent::__construct($switchbox);
     }
@@ -33,7 +33,7 @@ class Line extends PacketHandler {
      * @param $class
      * @throws \InvalidArgumentException
      */
-    function addCustomStreamProcessor($type, $class) {
+    public function addCustomStreamProcessor($type, $class) {
         $tmp = new $class(null);
         if (! $tmp instanceof StreamProcessor) {
             throw new \InvalidArgumentException("Class must be an instance of StreamProcessor!");
@@ -47,7 +47,7 @@ class Line extends PacketHandler {
      * @param $type
      * @return null|StreamProcessor
      */
-    function getCustomStreamProcessor($type) {
+    public function getCustomStreamProcessor($type) {
         if (isset($this->stream_processors[$type])) {
             return $this->stream_processors[$type];
         }

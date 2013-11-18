@@ -23,7 +23,7 @@ class Mesh {
     /**
      * @param SwitchBox $switchbox
      */
-    function __construct(SwitchBox $switchbox) {
+    public function __construct(SwitchBox $switchbox) {
         $this->switchbox = $switchbox;
 
         for ($i=0; $i!=256; $i++) {

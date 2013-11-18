@@ -13,7 +13,7 @@ class Bucket implements \IteratorAggregate, \Countable {
     /**
      *
      */
-    function __construct() {
+    public function __construct() {
         $this->nodes = new \SplObjectStorage();
 
         $this->evictions = 0;
@@ -25,7 +25,7 @@ class Bucket implements \IteratorAggregate, \Countable {
      *
      * @param Node $node
      */
-    function addNode(Node $node) {
+    public function addNode(Node $node) {
         // Just add when our bucket isn't full yet. Attach deals with duplicate nodes
         if (! $this->isFull()) {
             $this->nodes->attach($node);
@@ -58,7 +58,7 @@ class Bucket implements \IteratorAggregate, \Countable {
      *
      * @return bool
      */
-    function isFull() {
+    public function isFull() {
         return count($this->nodes) >= self::K;
     }
 
@@ -66,7 +66,7 @@ class Bucket implements \IteratorAggregate, \Countable {
     /**
      * Return the number of bad nodes that have been replaced by other nodes
      */
-    function getEvictions() {
+    public function getEvictions() {
         return $this->evictions;
     }
 
