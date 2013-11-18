@@ -1,23 +1,30 @@
 <?php
 
-namespace SwitchBox\Packet\Line;
+namespace SwitchBox\Packet\Line\Processor;
 
 
 use SwitchBox\Packet;
-use SwitchBox\Stream;
+use SwitchBox\Packet\Line\Stream;
 use SwitchBox\SwitchBox;
 
-abstract class streamProcessor {
+abstract class StreamProcessor {
 
     /** @var Stream */
     protected $stream;
 
-    public function __construct(Stream $stream) {
-        $this->setStream($stream);
-    }
 
     abstract public function processIncoming(Packet $packet);
     abstract public function generate(array $args);
+
+
+    /**
+     * @param $stream
+     */
+    function __construct(Stream $stream)
+    {
+        $this->stream = $stream;
+    }
+
 
     /**
      * @return mixed
@@ -27,6 +34,7 @@ abstract class streamProcessor {
         return $this->getStream()->getTo();
     }
 
+
     /**
      * @param mixed $stream
      */
@@ -35,6 +43,7 @@ abstract class streamProcessor {
         $this->stream = $stream;
     }
 
+
     /**
      * @return mixed
      */
@@ -42,6 +51,7 @@ abstract class streamProcessor {
     {
         return $this->stream;
     }
+
 
     /**
      * @return SwitchBox

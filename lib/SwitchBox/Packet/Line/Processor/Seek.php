@@ -1,13 +1,11 @@
 <?php
 
-namespace SwitchBox\Packet\Line;
+namespace SwitchBox\Packet\Line\Processor;
 
 use SwitchBox\DHT\Node;
 use SwitchBox\Packet;
-use SwitchBox\Stream;
-use SwitchBox\SwitchBox;
 
-class Seek extends streamProcessor {
+class Seek extends StreamProcessor {
 
     public function processIncoming(Packet $packet)
     {
@@ -30,7 +28,6 @@ class Seek extends streamProcessor {
     protected function _seek($line) {
         $nodes = array();
         foreach ($this->getSwitchBox()->getMesh()->getClosestForHash($line, 5) as $node) {
-            /** @var $node Node */
             $nodes[] = $node->getName() . "," . $node->getIp() . "," . $node->getPort();
         }
 
@@ -63,7 +60,7 @@ class Seek extends streamProcessor {
         print "*** generate SEEK\n";
         $hash = $args['hash'];
 
-        $header = $this->getStream()->createOutStreamHeader('seek', array('seek' => $hash));
+        $header = $this->getStream()->createOutStreamHeader('seek', array('seek' => $hash), false);
         return new Packet($this->getSwitchBox(), $header, null);
     }
 

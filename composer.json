@@ -1,7 +1,7 @@
 {
     "name": "jaytaph/SwitchBox",
     "description" : "",
-    "keywords" : [ "PHP", "TeleHash" ],
+    "keywords" : [ "P2P", "TeleHash", "Kademlia", "JSON", "UDP", "Encryption", "Decentralized" ],
     "homepage" : "https://github.com/jaytaph/SwitchBox",
     "license" : "3-Clause BSD",
     "repositories": [

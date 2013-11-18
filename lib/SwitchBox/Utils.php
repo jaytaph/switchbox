@@ -4,10 +4,24 @@ namespace SwitchBox;
 
 class Utils {
 
+    /**
+     * Convert a binary string to hex, padded with 0's to pad_length
+     *
+     * @param $str
+     * @param $pad_length
+     * @return string
+     */
     static public function bin2hex($str, $pad_length) {
         return str_pad(bin2hex($str), $pad_length, "0", STR_PAD_RIGHT);
     }
 
+
+    /**
+     * Convert a hex string to binary.
+     *
+     * @param $str
+     * @return string
+     */
     static public function hex2bin($str) {
         if (function_exists( 'hex2bin')) {
             // When hash starts with leading 0's it gets cut away by PHP during string casting. Hurrah!
@@ -28,7 +42,12 @@ class Utils {
     }
 
 
-
+    /**
+     * Convert true when the string is confirming a hex-string
+     *
+     * @param $str
+     * @return bool
+     */
     static public function isHex($str) {
         if (strspn($str, '0123456789abcdefABCDEF') != strlen($str)) return false;
         return true;

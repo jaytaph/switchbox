@@ -14,14 +14,23 @@ class Hash {
     const OUTPUT_HEX        = 2;            // hex output as string: "1235ABC ...")
     const OUTPUT_BYTE_ARRAY = 3;            // Binary output in reversed array format (MSB first)
 
+    /** @var string */
     protected $hash;                        // actual hash as hex-string
 
+
+    /**
+     * @param $hash
+     * @throws \InvalidArgumentException
+     */
     public function __construct($hash) {
+        if (strlen($hash) < self::HASH_SIZE) $hash = str_pad($hash, 64, '0', STR_PAD_RIGHT);
+
         if (! $this->isHash($hash)) {
-            throw new \InvalidArgumentException("Hash is not a valid SHA1 hash");
+            throw new \InvalidArgumentException("Hash '".$hash."' is not a valid SHA256 hash");
         }
         $this->hash = $hash;
     }
+
 
     /**
      * Returns hash in specified format
@@ -36,7 +45,8 @@ class Hash {
 
         if ($format == self::OUTPUT_BYTE_ARRAY) {
             $tmp = array();
-            for ($i=0; $i!=strlen($this->hash); $i++) {
+            $len = strlen($this->hash);
+            for ($i=0; $i!=$len; $i++) {
                 $tmp[] = hexdec($this->hash[$i]);
             }
             return array_reverse($tmp);
@@ -44,6 +54,7 @@ class Hash {
 
         return $this->hash;
     }
+
 
     /**
      * Returns true when given data is actually a valid hash
@@ -54,29 +65,6 @@ class Hash {
     static public function isHash($hash) {
         if (strlen($hash) != self::HASH_SIZE) return false;
         return Utils::isHex($hash);
-    }
-
-    /**
-     * Returns distance between 2 hashes. -1 when equal. 255 furthest bit, 0 closest bit
-     * @param Hash $other
-     * @return int
-     */
-    public function distance(Hash $other) {
-        $sbtab = array(-1,0,1,1,2,2,2,2,3,3,3,3,3,3,3,3);
-        $ret = 252;
-
-        $s = $this->getHash(self::OUTPUT_BYTE_ARRAY);
-        $d = $other->getHash(self::OUTPUT_BYTE_ARRAY);
-
-        for ($i=count($s)-1; $i>=0; $i--) {
-            $diff = $s[$i] ^ $d[$i];
-
-            if ($diff) {
-                return $ret + $sbtab[$diff];
-            }
-            $ret -= 4;
-        }
-        return -1;
     }
 
 
@@ -97,21 +85,35 @@ class Hash {
         return 0;
     }
 
+
     /**
      * Binary XOR two hashes, and return the result as another hash
      *
      * @param Hash $other
      * @return Hash
      */
-    public function binaryxor(Hash $other) {
-        $s = $this->getHash(self::OUTPUT_BYTE_ARRAY);
-        $d = $other->getHash(self::OUTPUT_BYTE_ARRAY);
+    public function binaryXor(Hash $other) {
+        $s = gmp_init($this->getHash(), 16);
+        $d = gmp_init($other->getHash(), 16);
+        $r = gmp_xor($s, $d);
+        return new Hash(gmp_strval($r, 16));
+    }
 
-        $r = "";
-        for ($i=count($s)-1; $i >=0; $i--) {
-            $r .= dechex($s[$i] ^ $d[$i]);
-        }
-        return new Hash($r);
+
+    /**
+     * This is just a bit quicker way of fetching xor + prefixlen.
+     *
+     * @param Hash $other
+     * @return int
+     */
+    public function getDistanceId(Hash $other) {
+        $s = gmp_init($this->getHash(), 16);
+        $d = gmp_init($other->getHash(), 16);
+        $r = gmp_xor($s, $d);
+
+        $d = 256;
+        while ($d > 0 && ! gmp_testbit($r, $d)) $d--;
+        return $d;
     }
 
 
@@ -127,6 +129,8 @@ class Hash {
 
 
     /**
+     * Returns string representation of the hash
+     *
      * @return string
      */
     public function __toString() {

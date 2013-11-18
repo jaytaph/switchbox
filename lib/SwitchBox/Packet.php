@@ -72,17 +72,8 @@ class Packet {
             return;
         }
 
-        // Check packet and set correct processor
-        switch ($this->header['type']) {
-            case "open" :
-                $this->type = self::TYPE_OPEN;
-//                $this->processor = new Line($this->switchbox, $this);
-                break;
-            case "line" :
-                $this->type = self::TYPE_LINE;
-//                $this->processor = new Line($this->switchbox, $this);
-                break;
-        }
+        // Set the packet type, based on the type found in the header
+        $this->type = $this->header['type'];
     }
 
     /**

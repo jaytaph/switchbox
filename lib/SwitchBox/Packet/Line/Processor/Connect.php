@@ -1,15 +1,13 @@
 <?php
 
-namespace SwitchBox\Packet\Line;
+namespace SwitchBox\Packet\Line\Processor;
 
 use SwitchBox\DHT\Node;
 use SwitchBox\Packet;
 use SwitchBox\Packet\Open;
-use SwitchBox\KeyPair;
-use SwitchBox\Stream;
-use SwitchBox\SwitchBox;
+use SwitchBox\DHT\KeyPair;
 
-class Connect extends streamProcessor {
+class Connect extends StreamProcessor {
 
 
     public function processIncoming(Packet $packet)
@@ -41,7 +39,7 @@ class Connect extends streamProcessor {
         }
 
         print_r($destination->getInfo());
-        $this->getSwitchBox()->getTxQueue()->enqueue_packet($destination, Open::generate($this->getSwitchBox(), $destination, null));
+        $this->getSwitchBox()->send($destination, Open::generate($this->getSwitchBox(), $destination, null));
     }
 
 
@@ -85,7 +83,7 @@ class Connect extends streamProcessor {
 //
 //        print_r($destination->getInfo());
 //
-//        $switchbox->getTxQueue()->enqueue_packet($destination, Open::generate($switchbox, $destination, null));
+//        $switchbox->send($destination, Open::generate($switchbox, $destination, null));
 //    }
 
     public function generate(array $args)

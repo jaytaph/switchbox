@@ -1,14 +1,11 @@
 <?php
 
-namespace SwitchBox\Packet\Line;
+namespace SwitchBox\Packet\Line\Processor;
 
-use SwitchBox\DHT\Node;
 use SwitchBox\Packet;
-use SwitchBox\Stream;
-use SwitchBox\SwitchBox;
+use SwitchBox\Packet\Line\Stream;
 
-class Peer extends streamProcessor {
-
+class Peer extends StreamProcessor {
 
     public function processIncoming(Packet $packet)
     {
@@ -49,7 +46,7 @@ class Peer extends streamProcessor {
         print "*** generate PEER\n";
         $hash = $args['hash'];
 
-        $header = $this->getStream()->createOutStreamHeader('peer', array('peer' => $hash));
+        $header = $this->getStream()->createOutStreamHeader('peer', array('peer' => $hash), false);
         return new Packet($this->getSwitchBox(), $header, null);
     }
 

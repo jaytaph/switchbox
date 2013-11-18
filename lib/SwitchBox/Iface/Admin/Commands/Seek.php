@@ -1,15 +1,21 @@
 <?php
 
-namespace SwitchBox\Admin\Commands;
+namespace SwitchBox\Iface\Admin\Commands;
 
-use SwitchBox\DHT\Node;
-use SwitchBox\Stream;
+use SwitchBox\Iface\SockHandler;
+use SwitchBox\Packet\Line\Stream;
 use SwitchBox\SwitchBox;
-use SwitchBox\Packet\Line\Seek as LineSeek;
+use SwitchBox\Packet\Line\Processor\Seek as LineSeek;
 
-class seek implements iCmd {
+class Seek implements iCmd {
 
-    public function execute(SwitchBox $switchbox, $sock, $args)
+    /**
+     * @param SwitchBox $switchbox
+     * @param SockHandler $handler
+     * @param $sock
+     * @param $args
+     */
+    public function execute(SwitchBox $switchbox, SockHandler $handler, $sock, $args)
     {
         if ($args[0] == "all") {
             $nodes = $switchbox->getMesh()->getAllNodes();
@@ -27,12 +33,13 @@ class seek implements iCmd {
         }
     }
 
-
+    /**
+     * @param SwitchBox $switchbox
+     * @param $hash
+     */
     protected function _seek(SwitchBox $switchbox, $hash) {
         // Find the closest connected nodes for the given hash, and ask if they know about $hash
         foreach ($switchbox->getMesh()->getClosestForHash($hash) as $node) {
-            /** @var $node Node */
-
             $stream = new Stream($switchbox, $node);
             $stream->addProcessor("seek", new LineSeek($stream));
             $stream->start(array(
@@ -41,11 +48,15 @@ class seek implements iCmd {
         }
     }
 
-    public function help()
+
+    /**
+     * @return array
+     */
+    public function getHelp()
     {
         return array(
             "seek [node|all]",
-            "seeks and connects to a nodename",
+            "seeks a nodename",
             "Node can be just the start of a node name. It will connect to all matching nodes.",
         );
     }

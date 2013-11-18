@@ -6,17 +6,17 @@ use SwitchBox\DHT\Node;
 use SwitchBox\Packet;
 use SwitchBox\SwitchBox;
 
-class Ping {
+class Ping extends PacketHandler {
 
     /**
      * Process an empty packet
      *
-     * @param SwitchBox $switchbox
      * @param Packet $packet
      * @return null|Node
      * @throws \DomainException
      */
-    static public function process(SwitchBox $switchbox, Packet $packet) {
+    public function process(Packet $packet) {
+        // Do nothing
     }
 
     /**
