@@ -2,12 +2,19 @@
 
 namespace SwitchBox\Iface\Admin\Commands;
 
+use SwitchBox\Iface\SockHandler;
 use SwitchBox\SwitchBox;
 
 
 class Whoami implements iCmd {
 
-    public function execute(SwitchBox $switchbox, $sock, $args)
+    /**
+     * @param SwitchBox $switchbox
+     * @param SockHandler $handler
+     * @param $sock
+     * @param $args
+     */
+    public function execute(SwitchBox $switchbox, SockHandler $handler, $sock, $args)
     {
         $node = $switchbox->getSelfNode();
         $buf = sprintf(ANSI_BLUE . "%15s ".ANSI_GREEN . "%5d".ANSI_RESET." | ".ANSI_YELLOW."%-50s".ANSI_RESET."\n",
@@ -17,6 +24,10 @@ class Whoami implements iCmd {
         socket_write($sock, $buf, strlen($buf));
     }
 
+
+    /**
+     * @return array
+     */
     public function getHelp()
     {
         return array(

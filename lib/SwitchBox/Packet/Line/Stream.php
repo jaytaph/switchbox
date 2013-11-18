@@ -3,44 +3,48 @@
  * Stream class. Encapsulates a reliable data-flow of packets over UDP
  */
 
-namespace SwitchBox;
+namespace SwitchBox\Packet\Line;
 
 use SwitchBox\DHT\Node;
 use SwitchBox\Packet\Line;
-use SwitchBox\Packet\Line\streamProcessor;
+use SwitchBox\Packet\Line\Processor\StreamProcessor;
+use SwitchBox\Packet;
+use SwitchBox\SwitchBox;
+use SwitchBox\Utils;
 
 class Stream {
     /** @var string */
-    protected $id;                      // Hexidecimal stream ID
+    protected $id;                      // Hexadecimal stream ID
     /** @var \SwitchBox\DHT\Node */
     protected $to;                      // Destination node
     /** @var array */
     protected $in_queue;                // Queue of incoming packets (still needs assembling)
     /** @var array */
     protected $out_queue;               // Queue of outgoing packets (unacknowledged packets)
-//    protected $in_seq;
-//    protected $out_seq;
-//    protected $in_done;
-//    protected $out_confirmed;
-//    protected $in_dups;
     /** @var int */
-    protected $last_ack;
+    protected $last_ack;                // Last acknowledged packet sequence number
     /** @var string */
     protected $type;                    // Line packet type (is this interesting?)
     /** @var bool */
     protected $custom;                  // true when this is a custom type
     /** @var \SwitchBox\SwitchBox */
     protected $switchbox;
-    /** @var iLineProcessor */
+    /** @var StreamProcessor */
     protected $processor;               // Processor to process the packets in this stream
-
+    /** @var int */
     protected $last_activity_ts;        // last time there was activity on this stream
-
+    /** @var bool  */
     protected $end = false;
 
     const MAX_BACKLOG       = 100;      // Maximum number of unacknowledged packets
     const MAX_RETRIES       = 3;        // Maximum number of retries on a single package
 
+
+    /**
+     * @param SwitchBox $switchbox
+     * @param Node $to
+     * @param null $id
+     */
     public function __construct(SwitchBox $switchbox, Node $to, $id = null) {
         $this->id = $id ? $id : Utils::bin2hex(openssl_random_pseudo_bytes(16), 32);
         print "New Stream ID: ".$this->id."\n";
@@ -53,19 +57,19 @@ class Stream {
         $this->out_queue = array();
         $this->in_seq = 0;
         $this->out_seq = 0;
-//        $this->in_done = false;
-//        $this->out_confirmed = 0;
-//        $this->in_dups = 0;
         $this->last_ack = 0;
 
         $this->end = false;
-
-//        $this->backbuffer = array();
 
         // Add this new stream to the destination node
         $to->addStream($this);
     }
 
+
+    /**
+     * @param $type
+     * @param StreamProcessor $processor
+     */
     public function addProcessor($type, StreamProcessor $processor) {
         $this->type = $type;
         $this->custom = (substr($type, 0, 1) == "_");
@@ -73,6 +77,12 @@ class Stream {
         $this->processor = $processor;
     }
 
+
+    /**
+     * @param $seq
+     * @param Packet $packet
+     * @throws \DomainException
+     */
     public function addToOutQueue($seq, Packet $packet) {
         if (count($this->out_queue) > self::MAX_BACKLOG) {
             throw new \DomainException("Too many packets in stream ".$this->getId()." backlog");
@@ -114,13 +124,22 @@ class Stream {
         return $this->out_seq++;
     }
 
+
+    /**
+     * @return null|string
+     */
     public function getId() {
         return $this->id;
     }
 
+
+    /**
+     * @return int
+     */
     public function getLastAck() {
         return $this->last_ack;
     }
+
 
     /**
      * @return \SwitchBox\SwitchBox
@@ -130,6 +149,7 @@ class Stream {
         return $this->switchbox;
     }
 
+
     /**
      * @return \SwitchBox\DHT\Node
      */
@@ -138,14 +158,23 @@ class Stream {
         return $this->to;
     }
 
+
+    /**
+     * @param $seq
+     * @return null
+     */
     public function getPacketFromOutQueue($seq) {
         return isset($this->out_queue[$seq]) ? $this->out_queue[$seq] : null;
     }
 
 
+    /**
+     * @return StreamProcessor
+     */
     public function getProcessor() {
         return $this->processor;
     }
+
 
     /**
      * Processes a packet that is part of a stream.
@@ -169,7 +198,7 @@ class Stream {
                 $this->addToOutQueue($missed_seq, $packet);
 
                 // Queue this packet for transmission
-                $this->getSwitchBox()->tx($this->getTo(), $packet);
+                $this->getSwitchBox()->send($this->getTo(), $packet);
             }
         }
 
@@ -188,33 +217,53 @@ class Stream {
         }
     }
 
+
+    /**
+     * @param Packet $inner_packet
+     */
     public function send(Packet $inner_packet) {
         $this->last_activity_ts = time();
 
         $packet = Line::generate($this->getSwitchBox(), $this->getTo(), $inner_packet);
-        $this->getSwitchBox()->getTxQueue()->enqueue_packet($this->getTo(), $packet);
+        $this->getSwitchBox()->send($this->getTo(), $packet);
     }
 
+
+    /**
+     * @param $type
+     * @param $extra_headers
+     * @param bool $end
+     * @return array
+     */
     public function createOutStreamHeader($type, $extra_headers, $end = true) {
         $this->last_activity_ts = time();
 
         $header = array(
             'c' => $this->getId(),
-            'seq' => $this->getNextSequence(),
-            'ack' => $this->getLastAck(),
+//            'seq' => $this->getNextSequence(),
+//            'ack' => $this->getLastAck(),
         );
         if ($type) $header['type'] = $type;
         if ($end) $header['end'] = true;
         return array_merge($header, $extra_headers);
     }
 
+
+    /**
+     * @return string
+     */
     public function getType() {
         return $this->type;
     }
 
+
+    /**
+     * @return bool
+     */
     public function isCustom() {
         return $this->custom;
     }
+
 
     /**
      * Starts a stream by generating an initial request
@@ -224,10 +273,18 @@ class Stream {
         $this->send($this->getProcessor()->generate($args));
     }
 
+
+    /**
+     * @return int
+     */
     public function getIdleTime() {
         return time() - $this->last_activity_ts;
     }
 
+
+    /**
+     * @return string
+     */
     public function __toString() {
         return $this->getId()." [Seq: ".$this->out_seq." Acked: ".$this->last_ack." Ended: ".($this->end ? "yes" : "no")."  Idle: ".$this->getIdleTime()."]\n";
     }

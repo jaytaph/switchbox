@@ -4,8 +4,6 @@ namespace SwitchBox\Packet\Line\Processor;
 
 use SwitchBox\DHT\Node;
 use SwitchBox\Packet;
-use SwitchBox\Stream;
-use SwitchBox\SwitchBox;
 
 class Seek extends StreamProcessor {
 

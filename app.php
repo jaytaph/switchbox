@@ -13,7 +13,7 @@ $seeds = array(
 );
 
 // Read or generate keypair
-$keypair = new SwitchBox\KeyPair("seed.json", true);
+$keypair = new SwitchBox\DHT\KeyPair("seed.json", true);
 $sb = new SwitchBox\SwitchBox($seeds, $keypair);
 print "\n> Online as: [".$sb->getSelfNode()->getName()."]\n\n";
 

@@ -10,11 +10,17 @@ abstract class PacketHandler {
     /** @var SwitchBox */
     protected $switchbox;
 
+    /**
+     *
+     * @param SwitchBox $switchbox
+     */
     function __construct(SwitchBox $switchbox) {
         $this->switchbox = $switchbox;
     }
 
     /**
+     * Return switchbox
+     *
      * @return \SwitchBox\SwitchBox
      */
     public function getSwitchbox()
@@ -23,5 +29,11 @@ abstract class PacketHandler {
     }
 
 
+    /**
+     * Actual handler for this type of packet
+     *
+     * @param Packet $packet
+     * @return mixed
+     */
     abstract public function process(Packet $packet);
 }

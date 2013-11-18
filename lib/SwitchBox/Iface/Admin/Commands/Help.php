@@ -2,11 +2,18 @@
 
 namespace SwitchBox\Iface\Admin\Commands;
 
+use SwitchBox\Iface\SockHandler;
 use SwitchBox\SwitchBox;
 
 class Help implements iCmd {
 
-    public function execute(SwitchBox $switchbox, $sock, $args)
+    /**
+     * @param SwitchBox $switchbox
+     * @param SockHandler $handler
+     * @param $sock
+     * @param $args
+     */
+    public function execute(SwitchBox $switchbox, SockHandler $handler, $sock, $args)
     {
         $it = new \GlobIterator(__DIR__ . "/*.php");
         foreach ($it as $file) {
@@ -20,6 +27,10 @@ class Help implements iCmd {
         }
     }
 
+
+    /**
+     * @return array
+     */
     public function getHelp()
     {
         return array(

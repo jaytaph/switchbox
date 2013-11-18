@@ -5,7 +5,7 @@ namespace SwitchBox\Iface;
 use SwitchBox\Iface\Admin\Commands\iCmd;
 use SwitchBox\SwitchBox;
 
-class Admin extends Sock {
+class Admin extends SockHandler {
 
     const DEFAULT_PROMPT  = "> ";
 
@@ -13,8 +13,15 @@ class Admin extends Sock {
 
     protected $sock_info = array();
 
+    /** @var SwitchBox */
+    protected $switchbox;
 
-    function __construct($tcp_port) {
+
+    /**
+     * @param SwitchBox $switchbox
+     * @param $tcp_port
+     */
+    function __construct(SwitchBox $switchbox, $tcp_port) {
         $this->sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
         socket_set_option($this->sock, SOL_SOCKET, SO_REUSEADDR, 1);
 
@@ -24,8 +31,24 @@ class Admin extends Sock {
 
         $this->sock_clients = array();
         $this->sock_info = array();         // @TODO: We should release sock_info elements as soon as the client sock disconnects
+
+        $this->switchbox = $switchbox;
     }
 
+
+    /**
+     * @return \SwitchBox\SwitchBox
+     */
+    public function getSwitchbox()
+    {
+        return $this->switchbox;
+    }
+
+
+    /**
+     * @param SwitchBox $switchbox
+     * @param $sock
+     */
     public function handle(SwitchBox $switchbox, $sock)
     {
         // Do initial socket connection
@@ -40,7 +63,6 @@ class Admin extends Sock {
     }
 
 
-
     /**
      * @param string $prompt
      */
@@ -48,6 +70,7 @@ class Admin extends Sock {
     {
         $this->_prompt = $prompt;
     }
+
 
     /**
      * @return string
@@ -82,8 +105,14 @@ EOB;
         $buf = ANSI_CYAN . $buf . ANSI_RESET;
         $this->_sock_write($sock, $buf);
 
-        $buf = "\nWelcome to the TeleHash Admin Panel. \n" .
-               "To quit, type 'quit', To seek help, type 'help'\n";
+
+        $buf = "\n".ANSI_CYAN."Welcome to the TeleHash Admin Panel. \n" .
+               "To quit, type '".ANSI_BLUE."quit".ANSI_CYAN."', To seek help, type '".ANSI_BLUE."help".ANSI_CYAN."'.".ANSI_RESET."\n";
+        $this->_sock_write($sock, $buf);
+
+        $this->_sock_write($sock, "\n");
+
+        $buf = ANSI_YELLOW . "Online as [".ANSI_GREEN.$this->getSwitchbox()->getSelfNode()->getName().ANSI_YELLOW."]" . ANSI_RESET."\n";
         $this->_sock_write($sock, $buf);
 
         $this->_sock_write($sock, $this->getPrompt());
@@ -118,7 +147,7 @@ EOB;
         if (class_exists($class)) {
             /** @var $cmd iCmd */
             $cmd = new $class();
-            $cmd->execute($switchbox, $sock, $args);
+            $cmd->execute($switchbox, $this, $sock, $args);
         } else {
             $this->_sock_write($sock, "Unknown command ".$cmd.". Type 'help' for all available commands. '.' repeats last command.\n");
         }

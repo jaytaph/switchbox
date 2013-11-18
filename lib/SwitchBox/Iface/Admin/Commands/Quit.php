@@ -2,10 +2,14 @@
 
 namespace SwitchBox\Iface\Admin\Commands;
 
+use SwitchBox\Iface\SockHandler;
 use SwitchBox\SwitchBox;
 
 class Quit implements iCmd {
 
+    /**
+     * @return array
+     */
     public function getHelp()
     {
         return array(
@@ -15,12 +19,19 @@ class Quit implements iCmd {
         );
     }
 
-    public function execute(SwitchBox $switchbox, $sock, $args)
+
+    /**
+     * @param SwitchBox $switchbox
+     * @param SockHandler $handler
+     * @param $sock
+     * @param $args
+     */
+    public function execute(SwitchBox $switchbox, SockHandler $handler, $sock, $args)
     {
         $buf = "ktnxbai!\n";
         socket_write($sock, $buf, strlen($buf));
 
-        $switchbox->closeSock($sock);
+        $handler->closeSock($sock);
     }
 
 }

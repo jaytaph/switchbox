@@ -4,9 +4,17 @@ namespace SwitchBox\Iface;
 
 use SwitchBox\SwitchBox;
 
-class Json extends Sock {
+class Json extends SockHandler {
 
-    function __construct($tcp_port) {
+    /** @var SwitchBox */
+    protected $switchbox;
+
+
+    /**
+     * @param SwitchBox $switchbox
+     * @param $tcp_port
+     */
+    function __construct(SwitchBox $switchbox, $tcp_port) {
         // Setup TCP command socket
         $this->sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
         socket_set_option($this->sock, SOL_SOCKET, SO_REUSEADDR, 1);
@@ -14,9 +22,16 @@ class Json extends Sock {
         socket_bind($this->sock, 0, $tcp_port);
         socket_listen($this->sock, 1024);
 
+        $this->switchbox = $switchbox;
+
         $this->sock_clients = array();
     }
 
+
+    /**
+     * @param SwitchBox $switchbox
+     * @param $sock
+     */
     public function handle(SwitchBox $switchbox, $sock)
     {
         // Do initial socket connection
@@ -38,7 +53,6 @@ class Json extends Sock {
         $sock = socket_accept($sock);
         $this->sock_clients[] = $sock;
     }
-
 
 
     /**

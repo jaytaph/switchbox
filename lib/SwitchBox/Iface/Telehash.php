@@ -2,31 +2,29 @@
 
 namespace SwitchBox\Iface;
 
-use SwitchBox\DHT\Node;
 use SwitchBox\Packet\Line;
+use SwitchBox\Packet\Line\Processor\StreamProcessor;
 use SwitchBox\Packet\Open;
 use SwitchBox\Packet\PacketHandler;
 use SwitchBox\Packet\Ping;
 use SwitchBox\Packet;
 use SwitchBox\SwitchBox;
-use SwitchBox\TxQueue;
 
-class Telehash extends Sock {
+class Telehash extends SockHandler {
 
     /** @var SwitchBox */
     protected $switchbox;
 
-    /** @var TxQueue */
-    protected $txqueue;
-
     /** @var StreamProcessor[]  */
-    protected $packet_handlers = array();
+    protected $packet_handlers = array();           // Handlers that deal with the different packets
 
 
+    /**
+     * @param SwitchBox $switchbox
+     * @param $udp_port
+     */
     function __construct(Switchbox $switchbox, $udp_port) {
         $this->switchbox = $switchbox;
-
-        $this->txqueue = new TxQueue();
 
         // Setup UDP mesh socket
         $this->sock = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
@@ -40,12 +38,17 @@ class Telehash extends Sock {
     }
 
 
+    /**
+     * @param SwitchBox $switchbox
+     * @param $sock
+     */
     public function handle(SwitchBox $switchbox, $sock)
     {
         if ($sock == $this->sock) {
-            $this->_handleSocket($switchbox, $sock);
+            $this->_handleSocket($sock);
         }
     }
+
 
     /**
      * @return \SwitchBox\SwitchBox
@@ -56,6 +59,9 @@ class Telehash extends Sock {
     }
 
 
+    /**
+     * @param $sock
+     */
     protected function _handleSocket($sock) {
         $ip = "";
         $port = 0;
@@ -78,7 +84,7 @@ class Telehash extends Sock {
         print "loop() Incoming '".ANSI_WHITE . $packet->getType(true). ANSI_RESET."' packet from ".$packet->getFromIp().":".$packet->getFromPort()."\n";
 
         if (isset($this->packet_handlers[$packet->getType()])) {
-            $this->packet_handlers[$packet->getType()]($this->getSwitchBox(), $packet);
+            $this->packet_handlers[$packet->getType()]->process($packet);
         } else {
             print ANSI_RED;
             print ("loop() Cannot decode this type of packet yet :(\n");
@@ -91,12 +97,17 @@ class Telehash extends Sock {
     /**
      * Add a packet handler
      * @param $type
-     * @param callable $cb
+     * @param \SwitchBox\Packet\PacketHandler $handler
      */
-    protected function addPacketHandler($type, PacketHandler $cb) {
-        $this->packet_handlers[$type] = $cb;
+    protected function addPacketHandler($type, PacketHandler $handler) {
+        $this->packet_handlers[$type] = $handler;
     }
 
+
+    /**
+     * @param $type
+     * @return StreamProcessor
+     */
     function getPacketHandler($type) {
         if (isset($this->packet_handlers[$type])) {
             return $this->packet_handlers[$type];
@@ -105,7 +116,11 @@ class Telehash extends Sock {
     }
 
 
-
+    /**
+     * @param $type
+     * @param callable $cb
+     * @throws \OutOfRangeException
+     */
     public function addStreamProcessor($type, callable $cb) {
         // Find the line processor
         if (! isset($this->packet_handlers[Packet::TYPE_LINE])) {
@@ -115,31 +130,21 @@ class Telehash extends Sock {
     }
 
 
+    /**
+     * @param $packet
+     * @param $ip
+     * @param $port
+     * @return int
+     */
     public function send($packet, $ip, $port) {
         print "Sending packet to ".$ip.":".$port."\n";
         return socket_sendto($this->sock, $packet, strlen($packet), 0, $ip, $port);
     }
 
 
-    public function flush() {
-        // Process any items that are inside the transmission queue
-        if (! $this->txqueue->isEmpty()) {
-            print count($this->txqueue)." packet(s) queued.\n";
-
-            while (!$this->txqueue->isEmpty()) {
-                $item = $this->txqueue->dequeue();
-
-                $bin_packet = $item['packet'];
-                /** @var $bin_packet Packet */
-                $this->send($bin_packet->encode(), $item['ip'], $item['port']);
-            }
-        }
-    }
-
-    public function enqueue(Node $node, Packet $packet) {
-        $this->txqueue->enqueue_packet($node, Open::generate($this->getSwitchBox(), $node, null));
-    }
-
+    /**
+     * @return array
+     */
     public function getSelectSockets()
     {
         return array($this->sock);

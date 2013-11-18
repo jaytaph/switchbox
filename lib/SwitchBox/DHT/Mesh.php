@@ -4,28 +4,88 @@ namespace SwitchBox\DHT;
 
 use SwitchBox\Packet;
 use SwitchBox\Packet\Line;
+use SwitchBox\SwitchBox;
 
+
+// We store nodes twice: one time inside buckets, and one time in a plain hash-list. This makes it easier and quicker
+// to find stuff. But we need to do some more work adding/removing nodes though
 
 class Mesh {
 
-    protected $nodes = array();
+    /** @var SwitchBox */
+    protected $switchbox;                   // Actual switchbox
+    /** @var Bucket[] */
+    protected $buckets = array();           // All buckets in the mesh (each for each bit of nodename)
+    /** @var Node[] */
+    protected $nodes = array();             // List of all nodes, used for quick lookups
 
+
+    /**
+     * @param SwitchBox $switchbox
+     */
+    function __construct(SwitchBox $switchbox) {
+        $this->switchbox = $switchbox;
+
+        for ($i=0; $i!=256; $i++) {
+            $this->buckets[$i] = new Bucket();
+        }
+    }
+
+
+    /**
+     * Returns all buckets
+     *
+     * @return \SwitchBox\DHT\Bucket[]
+     */
+    public function getBuckets()
+    {
+        return $this->buckets;
+    }
+
+
+    /**
+     * Return the switchbox
+     *
+     * @return \SwitchBox\SwitchBox
+     */
+    public function getSwitchbox()
+    {
+        return $this->switchbox;
+    }
+
+
+    /**
+     * Find the node that corresponds to this line
+     *
+     * @param $line
+     * @return null|Node
+     */
     public function findByLine($line) {
         foreach ($this->getAllnodes() as $node) {
-            //print "Node: ".$node->getName()." Line: ".$node->getLineOut()."\n";
             if ($node->getLineOut() == $line) return $node;
         }
         return null;
     }
+
+
     /**
+     * Add a node to the mesh
+     *
      * @param Node $node
      */
     public function addNode(Node $node) {
-        print "*** Adding node to mesh: ".$node->getName()."\n";
+        // Add node to correct bucket
+        $bucket_id = $this->getSwitchBox()->getSelfNode()->getHash()->getDistanceId($node->getHash());
+        $this->buckets[$bucket_id]->addNode($node);
+
+        // Add to array
         $this->nodes[$node->getName()] = $node;
     }
 
+
     /**
+     * Does this node already exist in our hash?
+     *
      * @param $name
      * @return bool
      */
@@ -33,24 +93,45 @@ class Mesh {
         return isset($this->nodes[$name]);
     }
 
+
     /**
+     * Return a list of all nodes that are actually connected
+     *
      * @return Node[]
      */
     public function getConnectedNodes() {
         return array_filter($this->nodes, function (Node $e) { return $e->isConnected(); });
     }
 
+
+    /**
+     * Return a list of nodes that are the closest to the given node
+     *
+     * @param $hash
+     * @param int $limit
+     * @return Node[]
+     */
     public function getClosestForHash($hash, $limit = 3) {
         return array_slice($this->getOrderedNodes($hash), 0, $limit);
     }
 
+
     /**
+     * Return all nodes
+     *
      * @return Node[]
      */
     public function getAllNodes() {
         return $this->nodes;
     }
 
+
+    /**
+     * Return all nodes that starts with nodename
+     *
+     * @param $partial_name
+     * @return array
+     */
     public function findMatchingNodes($partial_name) {
         // Find a collection of nodes that STARTS with the name
         $matched_nodes = array_filter($this->nodes, function (Node $e) use ($partial_name) {
@@ -60,61 +141,22 @@ class Mesh {
         return $matched_nodes;
     }
 
+
     /**
+     * Return node or null if not found
+     *
      * @param $name
-     * @param bool $return_one_only
      * @return null|Node
      */
-    public function getNode($name, $return_one_only = true) {
+    public function getNode($name) {
         if ($this->nodeExists($name)) return $this->nodes[$name];
         return null;
     }
 
-//    /**
-//     * drop hn into its appropriate bucket
-//     *
-//     * @param Node $self
-//     * @param Node $other
-//     * @param bool $force
-//     */
-//    public function bucketize(Node $self, Node $other, $force = false) {
-//    //        if (! $force && ! $other->getBucket()) return;
-//    //
-//    //        $hash_self = new Hash($self->getName());
-//    //        $hash_other = new Hash($other->getName());
-//    //        $bucketNr = $hash_self->distance($hash_other);
-//    //        $self->addToBucket($bucketNr, $other);
-//    }
-//
-//    /**
-//     * delete any dead hashnames
-//     */
-//    public function reap() {
-//        // @TODO
-//    }
-//
-//    /**
-//     * Get any new nodes, and request a line to them
-//     *
-//     * @param $hash
-//     * @return null|Node
-//     */
-//    public function seen($hash) {
-//        return $this->getNode($hash);
-//    }
-//
-//    // update which lines are elected to keep, rebuild self.buckets array
-//    public function elect() {
-//        // @TODO
-//    }
-//
-//    // every line that needs to be maintained, ping them
-//    public function ping() {
-//        // @TODO
-//    }
-
 
     /**
+     * Get all nodes sorted by distance
+     *
      * @param null $hash
      * @return Node[]
      */
@@ -126,7 +168,7 @@ class Mesh {
         }
 
         foreach ($this->getAllNodes() as $node) {
-            $pq->insert($node, $hash->distance($node->getHash()));
+            $pq->insert($node, $hash->getDistanceId($node->getHash()));
         }
 
         return array_reverse(iterator_to_array($pq));

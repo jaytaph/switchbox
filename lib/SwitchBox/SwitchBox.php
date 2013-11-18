@@ -6,9 +6,10 @@ use SwitchBox\DHT\KeyPair;
 use SwitchBox\DHT\Mesh;
 use SwitchBox\DHT\Node;
 use SwitchBox\Iface\iSockHandler;
+use SwitchBox\Packet\Line\Stream;
 use SwitchBox\Packet\Open;
-use SwitchBox\Packet\Line\Peer as LinePeer;
-use SwitchBox\Packet\Line\Seek as LineSeek;
+use SwitchBox\Packet\Line\Processor\Peer as LinePeer;
+use SwitchBox\Packet\Line\Processor\Seek as LineSeek;
 use SwitchBox\Packet\Ping;
 
 // Make sure we are using GMP extension for AES libraries
@@ -37,8 +38,6 @@ class SwitchBox {
     protected $self_node;                   // Our own node
     /** @var DHT\Mesh */
     protected $mesh;                        // Actual DHT mesh
-    /** @var TxQueue */
-    protected $txqueue;                     // Our transmit buffer with packets
 
     /** @var bool */
     protected $ended = false;               // Has the application ended?
@@ -58,7 +57,7 @@ class SwitchBox {
         $this->start_time = time();
 
         // Setup generic structures
-        $this->mesh = new Mesh();
+        $this->mesh = new Mesh($this);
 
         $this->telehash_interface = new Iface\Telehash($this, $udp_port);
         $this->addSocketHandler("telehash", $this->telehash_interface);
@@ -71,14 +70,14 @@ class SwitchBox {
         // Add and connect seeds to the mesh
         foreach ($seeds as $seed) {
             $this->mesh->addNode($seed);
-            $this->getTelehashInterface()->enqueue($seed, Open::generate($this, $seed, null));
+            $this->send($seed, Open::generate($this, $seed, null));
         }
 
         // Create our communication interfaces
-        $this->admin_interface = new Iface\Admin(42424);
+        $this->admin_interface = new Iface\Admin($this, 42424);
         $this->addSocketHandler("admin panel", $this->admin_interface);
 
-        $this->json_interface = new Iface\Json(42425);
+        $this->json_interface = new Iface\Json($this, 42425);
         $this->addSocketHandler("json", $this->json_interface);
     }
 
@@ -121,24 +120,17 @@ class SwitchBox {
     }
 
 
-    public function send($packet, $ip, $port) {
+    public function send(Node $node, Packet $packet) {
         $th = $this->getTelehashInterface();
-        return $th->send($packet, $ip, $port);
+        return $th->send($packet->encode(), $node->getIp(), $node->getPort());
     }
 
-    public function flush() {
-        $th = $this->getTelehashInterface();
-        $th->flush();
-    }
 
     /**
      * @throws \RunTimeException
      */
     public function loop() {
         do {
-            // Flush any outgoing packets
-            $this->getTelehashInterface()->flush();
-
             // Wait for incoming data from any socket
             $r = array();
             foreach ($this->getSocketHandlers() as $handler) {
@@ -186,6 +178,7 @@ class SwitchBox {
 
 
     /**
+     * @param $type
      * @return iSockHandler
      */
     function getSocketHandler($type) {
@@ -193,14 +186,6 @@ class SwitchBox {
             return $this->socket_handlers[$type];
         }
         return null;
-    }
-
-    /**
-     * @return \SwitchBox\TxQueue
-     */
-    public function getTxQueue()
-    {
-        return $this->txqueue;
     }
 
     /**
@@ -214,7 +199,7 @@ class SwitchBox {
     public function doMaintenance() {
         print ANSI_CYAN . "*** Maintenance Start". ANSI_RESET . "\n";
 //        $this->_seekNodes();
-//        $this->_connectToNodes();
+        $this->_connectToNodes();
 //        $this->_closeIdleStreams();
         print ANSI_CYAN . "*** Maintenance End". ANSI_RESET . "\n";
     }
@@ -246,8 +231,10 @@ class SwitchBox {
         }
 
         foreach ($nodes as $node) {
+            /** @var $node Node */
+
             // Send out a ping packet, so they might punch through our NAT (if any)
-            $this->getTxQueue()->enqueue_packet($node, Ping::generate($this));
+            $this->send($node, Ping::generate($this));
 
             // Ask (all!??) nodes to let destination connect to use
             foreach ($this->getMesh()->getConnectedNodes() as $seed) {
@@ -270,6 +257,7 @@ class SwitchBox {
             foreach ($node->getStreams() as $stream) {
                 // No activity since 30 seconds, we should close the stream
                 if ($stream->getIdleTime() > self::MAX_IDLE_STREAM_TIME) {
+                    print "Closing stream $stream \n";
                     $node->removeStream($stream);
                 }
             }
@@ -278,21 +266,16 @@ class SwitchBox {
 
 
 
-    public function addCustomHandler($type, callable $processor) {
-        $th = $this->getTelehashInterface();
-
-        $lp = $th->getPacketHandler('line');
-        if ($lp == null) {
-            throw new \UnexpectedValueException("A line processor should always be available");
-        }
-
-        $ch = $lp->getStreamProcessor('custom');
-        if ($ch == null) {
-            throw new \UnexpectedValueException("A custom stream processor should always be available");
-        }
-
-        $ch->addCustomHandler($type, $processor);
-    }
+//    public function addCustomHandler($type, $processor) {
+//        $th = $this->getTelehashInterface();
+//
+//        $lp = $th->getPacketHandler('line');
+//        if ($lp == null) {
+//            throw new \UnexpectedValueException("A line processor should always be available");
+//        }
+//
+//        $lp->addCustomStreamProcessor($type, $processor);
+//    }
 
     /**
      * @return string

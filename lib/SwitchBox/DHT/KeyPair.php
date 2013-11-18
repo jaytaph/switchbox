@@ -3,15 +3,18 @@
 namespace SwitchBox\DHT;
 
 class KeyPair {
-    protected $private_key;
-    protected $public_key;
-
     const FORMAT_PEM    = "pem";
     const FORMAT_DER    = "der";
+
+    /** @var string */
+    protected $private_key;             // PEM formatted private key
+    /** @var string */
+    protected $public_key;              // PEM formatted public key
 
 
     /**
      * @param $filename
+     * @param bool $generate
      */
     public function __construct($filename, $generate = true)
     {
@@ -28,7 +31,11 @@ class KeyPair {
 
 
     /**
+     * Generate new json file with keypair
+     *
      * @param $filename
+     * @param int $bits
+     * @return string
      */
     static public function generate($filename, $bits = 2048) {
         $res = openssl_pkey_new(array(
@@ -50,6 +57,8 @@ class KeyPair {
 
 
     /**
+     * Return private part of the key
+     *
      * @return mixed
      */
     public function getPrivateKey()
@@ -59,6 +68,9 @@ class KeyPair {
 
 
     /**
+     * Return public part of the key in specified format
+     *
+     * @param string $format
      * @return mixed
      */
     public function getPublicKey($format = self::FORMAT_PEM)
@@ -83,13 +95,13 @@ class KeyPair {
         return dechex(128 + strlen($output)/2) . $output;
     }
 
+
     /**
      * Convert a PEM string to DER
-     *
-     *
      * @TODO: Shouldn't this be ASN1?
      *
      * @param $pem
+     * @throws \RuntimeException
      * @return string
      */
     static public function convertPemToDer($pem) {
@@ -101,6 +113,7 @@ class KeyPair {
         $derData = base64_decode($derData);
         return $derData;
     }
+
 
     /**
      * Convert a DER string to PEM

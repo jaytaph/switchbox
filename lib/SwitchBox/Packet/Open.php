@@ -7,6 +7,7 @@ use SwitchBox\DHT\KeyPair;
 use SwitchBox\SwitchBox;
 use SwitchBox\Utils;
 use SwitchBox\Packet;
+use SwitchBox\Packet\Line\Stream;
 
 class Open extends PacketHandler {
 
@@ -100,7 +101,7 @@ class Open extends PacketHandler {
         }
 
         // Do we know this node or not?
-        $node = $this->getSwitchBox()->getMesh()->seen(Utils::bin2hex($hash, 64));
+        $node = $this->getSwitchBox()->getMesh()->getNode(Utils::bin2hex($hash, 64));
         if (! $node) {
             // New node, let's create it
             $node = new Node($packet->getFromIp(), $packet->getFromPort(), KeyPair::convertDerToPem($key), hash('sha256', $innerPacket->getBody()));
@@ -119,15 +120,6 @@ class Open extends PacketHandler {
         // Update open time values
         $node->setOpenAt(time());
 
-
-//        if (empty($node->getLineIn()) || $node->getLineIn() != $innerHeader['line']) {
-//            print ANSI_RED . "Intermediate Info....\n";
-//            print_r($node->getInfo());
-//            print ANSI_RESET;
-//
-//            $this->getSwitchBox()->getTxQueue()->enqueue_packet($node, Open::generate($this->getSwitchBox(), $node, null));
-//        }
-
         // we have an open line to the other side..
         $node->setLineIn($innerHeader['line']);
         $node->recalcEncryptionKeys();
@@ -139,14 +131,14 @@ class Open extends PacketHandler {
             print_r($node->getInfo());
 
             // Try and do a seek to ourselves, this allows us to find our outside IP/PORT
-                    $stream = new Stream($this->getSwitchBox(), $node);
-            $stream->addProcessor("seek", new Line\Seek($stream));
+            $stream = new Stream($this->getSwitchBox(), $node);
+            $stream->addProcessor("seek", new Line\Processor\Seek($stream));
             $stream->start(array(
                 'hash' => $this->getSwitchBox()->getSelfNode()->getName(),
             ));
         } else {
             print ANSI_YELLOW."Node ".(string)$node." is not yet connected. ".ANSI_RESET."\n";
-            $this->getSwitchBox()->getTxQueue()->enqueue_packet($node, Open::generate($this->getSwitchBox(), $node, null));
+            $this->getSwitchBox()->send($node, Open::generate($this->getSwitchBox(), $node, null));
         }
 
         return $node;

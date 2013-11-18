@@ -2,13 +2,10 @@
 
 namespace SwitchBox\Packet\Line\Processor;
 
-use SwitchBox\DHT\Node;
 use SwitchBox\Packet;
-use SwitchBox\Stream;
-use SwitchBox\SwitchBox;
+use SwitchBox\Packet\Line\Stream;
 
 class Peer extends StreamProcessor {
-
 
     public function processIncoming(Packet $packet)
     {

@@ -7,32 +7,47 @@ use SwitchBox\Packet;
 use SwitchBox\Packet\Line\Processor\Connect;
 use SwitchBox\Packet\Line\Processor\Peer;
 use SwitchBox\Packet\Line\Processor\Seek;
-use SwitchBox\Packet\Line\Processor\Custom;
 use SwitchBox\Packet\Line\Processor\StreamProcessor;
-use SwitchBox\Stream;
+use SwitchBox\Packet\Line\Stream;
 use SwitchBox\SwitchBox;
 use SwitchBox\Utils;
 
 class Line extends PacketHandler {
 
     /** @var StreamProcessor[] */
-    protected $stream_processors = array();
+    protected $stream_processors = array();         // All the stream processors that are available
 
+    /**
+     * @param SwitchBox $switchbox
+     */
     function __construct(SwitchBox $switchbox)
     {
         parent::__construct($switchbox);
-
-        $this->addStreamProcessor("connect", new Connect());
-        $this->addStreamProcessor("peer", new Peer());
-        $this->addStreamProcessor("seek", new Seek());
-        $this->addStreamProcessor("custom", new Custom());
     }
 
-    function addStreamProcessor($type, StreamProcessor $processor) {
-        $this->stream_processors[$type] = $processor;
+
+    /**
+     * Add a custom stream processor
+     *
+     * @param $type
+     * @param $class
+     * @throws \InvalidArgumentException
+     */
+    function addCustomStreamProcessor($type, $class) {
+        $tmp = new $class(null);
+        if (! $tmp instanceof StreamProcessor) {
+            throw new \InvalidArgumentException("Class must be an instance of StreamProcessor!");
+        }
+
+        $this->stream_processors[$type] = $class;
     }
 
-    function getStreamProcessor($type) {
+
+    /**
+     * @param $type
+     * @return null|StreamProcessor
+     */
+    function getCustomStreamProcessor($type) {
         if (isset($this->stream_processors[$type])) {
             return $this->stream_processors[$type];
         }
@@ -43,14 +58,14 @@ class Line extends PacketHandler {
     /**
      * Process a line packet by decoding and passing it to the correct stream-handler
      *
-     * @param SwitchBox $switchbox
      * @param Packet $packet
+     * @return mixed|void
      * @throws \InvalidArgumentException
-     * @throws \DomainException
      */
     public function process(Packet $packet)
     {
         $header = $packet->getHeader();
+        print_r($header);
 
         // Are we actually a line packet?
         if ($header['type'] != "line") {
@@ -60,7 +75,7 @@ class Line extends PacketHandler {
         // Find our node
         $from = $this->getSwitchBox()->getMesh()->findByLine($header['line']);
         if (! $from) {
-            print "Cannot find matching node for line ".$header['line'];
+            print "Cannot find matching node for line ".$header['line']."\n";
             return;
         }
 
@@ -72,6 +87,7 @@ class Line extends PacketHandler {
         $inner_packet = Packet::decode($this->getSwitchBox(), $cipher->decrypt($packet->getBody()));
 
         $inner_header = $inner_packet->getHeader();
+        print_r($inner_header);
         $stream = $from->getStream($inner_header['c']);
         if (! $stream) {
             $stream = new Stream($this->getSwitchBox(), $from, $inner_header['c']);
@@ -91,8 +107,14 @@ class Line extends PacketHandler {
                     $stream->addProcessor("seek", new Seek($stream));
                     break;
                 default :
-                    print ANSI_RED . "Unknown incoming type in line: ".print_r($inner_header, true).ANSI_RESET . "\n";
-                    return;
+                    // Let's try and iterate our custom handlers to see if we have anything that matches
+                    $processor = $this->getCustomStreamProcessor($inner_header['type']);
+                    if ($processor) {
+                        $stream->addProcessor($inner_header['type'], new $processor($stream));
+                    } else {
+                        print ANSI_RED . "Unknown incoming type in line: ".print_r($inner_header, true).ANSI_RESET . "\n";
+                        return;
+                    }
             }
 
             print ANSI_YELLOW . "CREATED ".$stream->getType()." STREAM " . ANSI_RESET . "\n";
@@ -101,6 +123,7 @@ class Line extends PacketHandler {
         // Process already existing stream, make sure end/acks etc are done properly
         $stream->process($inner_packet);
     }
+
 
     /**
      * Generate a complete line packet based on te inner packet

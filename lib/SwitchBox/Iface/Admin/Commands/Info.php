@@ -2,15 +2,19 @@
 
 namespace SwitchBox\Iface\Admin\Commands;
 
-use SwitchBox\DHT\Node;
-use SwitchBox\Stream;
+use SwitchBox\Iface\SockHandler;
 use SwitchBox\SwitchBox;
-use SwitchBox\Packet\Ping;
-use SwitchBox\Packet\Line\Peer as LinePeer;
+use SwitchBox\Packet\Line\Processor\Peer as LinePeer;
 
 class Info implements iCmd {
 
-    public function execute(SwitchBox $switchbox, $sock, $args)
+    /**
+     * @param SwitchBox $switchbox
+     * @param SockHandler $handler
+     * @param $sock
+     * @param $args
+     */
+    public function execute(SwitchBox $switchbox, SockHandler $handler, $sock, $args)
     {
         $hash = $args[0];
         $node = $switchbox->getMesh()->getNode($hash);
@@ -47,6 +51,10 @@ class Info implements iCmd {
 
     }
 
+
+    /**
+     * @return array
+     */
     public function getHelp()
     {
         return array(
