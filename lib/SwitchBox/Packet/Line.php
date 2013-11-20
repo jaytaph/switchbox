@@ -17,14 +17,6 @@ class Line extends PacketHandler {
     /** @var StreamProcessor[] */
     protected $stream_processors = array();         // All the stream processors that are available
 
-    /**
-     * @param SwitchBox $switchbox
-     */
-    public function __construct(SwitchBox $switchbox)
-    {
-        parent::__construct($switchbox);
-    }
-
 
     /**
      * Add a custom stream processor
