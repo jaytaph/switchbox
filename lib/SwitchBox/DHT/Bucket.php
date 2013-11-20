@@ -37,11 +37,12 @@ class Bucket implements \IteratorAggregate, \Countable {
         $nodes = array();
         foreach ($this->nodes as $node) {
             /** @var $node Node */
-            $nodes[$node->getHealth()] = $node;
+            if (! isset($nodes[$node->getHealth()])) $nodes[$node->getHealth()] = array();
+            $nodes[$node->getHealth()][] = $node;
         }
 
         // Sorry, no bad nodes, so we can't
-        if (empty($nodes[Node::HEALTH_BAD])) return;
+        if (! isset($nodes[Node::HEALTH_BAD])) return;
 
         // Remove all bad nodes
         foreach ($nodes[Node::HEALTH_BAD] as $node) {
@@ -49,7 +50,9 @@ class Bucket implements \IteratorAggregate, \Countable {
             $this->nodes->detach($node);
         }
 
-        $this->nodes->attach($node);
+        if (! $this->isFull()) {
+            $this->nodes->attach($node);
+        }
     }
 
 

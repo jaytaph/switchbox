@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<phpunit colors="true" bootstrap="./vendor/autoload.php" verbose="true">
+<phpunit
+    colors="true"
+    stopOnFailure="false"
+    convertErrorsToExceptions="true"
+    convertNoticesToExceptions="true"
+    convertWarningsToExceptions="true"
+    bootstrap="./vendor/autoload.php"
+    verbose="true"
+>
     <testsuites>
         <testsuite name="SwitchBox Test Suite">
             <directory>./tests/</directory>
@@ -12,4 +20,9 @@
             <directory>./lib/SwitchBox</directory>
         </whitelist>
     </filter>
+
+    <logging>
+        <log type="coverage-clover" target="./.coverage.xml" />
+    </logging>
+
 </phpunit>

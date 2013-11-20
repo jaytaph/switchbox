@@ -13,20 +13,13 @@ class KeyPair {
 
 
     /**
-     * @param $filename
-     * @param bool $generate
+     * @param $priv
+     * @param $pub
      */
-    public function __construct($filename, $generate = true)
+    public function __construct($priv, $pub)
     {
-        // Generate new keypair if we can't find one
-        if (! file_exists($filename) && $generate) {
-            $json = json_decode(self::generate($filename));
-        } else {
-            $json = json_decode(file_get_contents($filename));
-        }
-
-        $this->private_key = $json->private;
-        $this->public_key = $json->public;
+        $this->public_key = $pub;
+        $this->private_key = $priv;
     }
 
 
@@ -34,10 +27,31 @@ class KeyPair {
      * Generate new json file with keypair
      *
      * @param $filename
+     * @param bool $generate
      * @param int $bits
-     * @return string
+     * @throws \InvalidArgumentException
+     * @return KeyPair
      */
-    static public function generate($filename, $bits = 2048) {
+    static public function fromFile($filename, $generate = true, $bits = 2048) {
+        if (! file_exists($filename)) {
+            if (! $generate) {
+                throw new \InvalidArgumentException("Cannot find key file: $filename\n");
+            }
+            $kp = self::generate($bits);
+            file_put_contents($filename, json_encode(array("public" => $kp->getPublicKey(), "private" => $kp->getPrivateKey())));
+            return $kp;
+        }
+
+        $json = file_get_contents($filename);
+        $key = json_decode($json);
+        return new KeyPair($key->private, $key->public);
+    }
+
+    /**
+     * @param int $bits
+     * @return KeyPair
+     */
+    static public function generate($bits = 2048) {
         $res = openssl_pkey_new(array(
             "digest_algo" => "sha512",
             "private_key_bits" => $bits,
@@ -48,11 +62,7 @@ class KeyPair {
         $keypair['public'] = $tmp['key'];
         openssl_pkey_export($res, $keypair['private']);
 
-        $json = json_encode($keypair);
-        file_put_contents($filename, $json);
-
-        // return json, so even if writing fails, we at least have some keys to work with...
-        return $json;
+        return new KeyPair($keypair['private'], $keypair['public']);
     }
 
 
@@ -82,18 +92,18 @@ class KeyPair {
     }
 
 
-    /**
-     * Return the DER length of a string
-     *
-     * @param $length
-     * @return string
-     */
-    static public function derLength($length) {
-        if ($length < 128) return str_pad(dechex($length), 2, '0', STR_PAD_LEFT);
-        $output = dechex($length);
-        if (strlen($output) % 2 != 0) $output = '0'.$output;
-        return dechex(128 + strlen($output)/2) . $output;
-    }
+//    /**
+//     * Return the DER length of a string
+//     *
+//     * @param $length
+//     * @return string
+//     */
+//    static public function derLength($length) {
+//        if ($length < 128) return str_pad(dechex($length), 2, '0', STR_PAD_LEFT);
+//        $output = dechex($length);
+//        if (strlen($output) % 2 != 0) $output = '0'.$output;
+//        return dechex(128 + strlen($output)/2) . $output;
+//    }
 
 
     /**

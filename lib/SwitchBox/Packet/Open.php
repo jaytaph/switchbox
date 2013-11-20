@@ -138,7 +138,7 @@ class Open extends PacketHandler {
             ));
         } else {
             print ANSI_YELLOW."Node ".(string)$node." is not yet connected. ".ANSI_RESET."\n";
-            $this->getSwitchBox()->send($node, Open::generate($this->getSwitchBox(), $node, null));
+            $this->getSwitchBox()->send($node, self::generate($this->getSwitchBox(), $node, null));
         }
 
         return $node;
