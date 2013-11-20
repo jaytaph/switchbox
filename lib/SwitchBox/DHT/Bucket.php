@@ -37,8 +37,10 @@ class Bucket implements \IteratorAggregate, \Countable {
         $nodes = array();
         foreach ($this->nodes as $node) {
             /** @var $node Node */
-            if (! isset($nodes[$node->getHealth()])) $nodes[$node->getHealth()] = array();
-            $nodes[$node->getHealth()][] = $node;
+            $health = $node->getHealth();
+
+            if (! isset($nodes[$health])) $nodes[$health] = array();
+            $nodes[$health][] = $node;
         }
 
         // Sorry, no bad nodes, so we can't
