@@ -45,19 +45,45 @@ class SwitchBox_DHT_BucketTest extends PHPUnit_Framework_TestCase {
                     ->setConstructorArgs(array("127.0.0.1", 42424, null, hash("sha256", "foobar")))
                     ->getMock();
 
-        // Don't change this seed!
-        srand(12345);
-
         $node->expects($this->any())
                 ->method('getHealth')
-                ->will($this->returnCallback(
-                    function(){
-                        $i = rand(1, 10);
-                        if ($i < 5) return Node::HEALTH_GOOD;
-                        if ($i < 8) return Node::HEALTH_UNKNOWN;
-                        return Node::HEALTH_BAD;
-                    }
-                ));
+                ->will($this->onConsecutiveCalls(
+                           Node::HEALTH_BAD, Node::HEALTH_BAD, Node::HEALTH_GOOD, Node::HEALTH_BAD, Node::HEALTH_GOOD,
+                           Node::HEALTH_GOOD, Node::HEALTH_UNKNOWN, Node::HEALTH_BAD, Node::HEALTH_BAD, Node::HEALTH_GOOD,
+                           Node::HEALTH_UNKNOWN, Node::HEALTH_BAD, Node::HEALTH_UNKNOWN, Node::HEALTH_GOOD, Node::HEALTH_GOOD,
+                           Node::HEALTH_BAD, Node::HEALTH_BAD, Node::HEALTH_UNKNOWN, Node::HEALTH_BAD, Node::HEALTH_GOOD,
+                           Node::HEALTH_UNKNOWN, Node::HEALTH_GOOD, Node::HEALTH_BAD, Node::HEALTH_BAD, Node::HEALTH_UNKNOWN,
+                           Node::HEALTH_BAD, Node::HEALTH_UNKNOWN, Node::HEALTH_BAD, Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN,
+                           Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN,
+                           Node::HEALTH_UNKNOWN, Node::HEALTH_BAD, Node::HEALTH_GOOD, Node::HEALTH_GOOD, Node::HEALTH_BAD,
+                    Node::HEALTH_BAD, Node::HEALTH_BAD, Node::HEALTH_UNKNOWN, Node::HEALTH_BAD, Node::HEALTH_GOOD,
+                    Node::HEALTH_UNKNOWN, Node::HEALTH_GOOD, Node::HEALTH_BAD, Node::HEALTH_BAD, Node::HEALTH_UNKNOWN,
+                    Node::HEALTH_BAD, Node::HEALTH_UNKNOWN, Node::HEALTH_BAD, Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN,
+                    Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN,
+                    Node::HEALTH_UNKNOWN, Node::HEALTH_BAD, Node::HEALTH_GOOD, Node::HEALTH_GOOD, Node::HEALTH_BAD,
+                    Node::HEALTH_BAD, Node::HEALTH_BAD, Node::HEALTH_UNKNOWN, Node::HEALTH_BAD, Node::HEALTH_GOOD,
+                    Node::HEALTH_UNKNOWN, Node::HEALTH_GOOD, Node::HEALTH_BAD, Node::HEALTH_BAD, Node::HEALTH_UNKNOWN,
+                    Node::HEALTH_BAD, Node::HEALTH_UNKNOWN, Node::HEALTH_BAD, Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN,
+                    Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN,
+                    Node::HEALTH_UNKNOWN, Node::HEALTH_BAD, Node::HEALTH_GOOD, Node::HEALTH_GOOD, Node::HEALTH_BAD,
+                    Node::HEALTH_BAD, Node::HEALTH_BAD, Node::HEALTH_UNKNOWN, Node::HEALTH_BAD, Node::HEALTH_GOOD,
+                    Node::HEALTH_UNKNOWN, Node::HEALTH_GOOD, Node::HEALTH_BAD, Node::HEALTH_BAD, Node::HEALTH_UNKNOWN,
+                    Node::HEALTH_BAD, Node::HEALTH_UNKNOWN, Node::HEALTH_BAD, Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN,
+                    Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN,
+                    Node::HEALTH_UNKNOWN, Node::HEALTH_BAD, Node::HEALTH_GOOD, Node::HEALTH_GOOD, Node::HEALTH_BAD,
+                    Node::HEALTH_BAD, Node::HEALTH_BAD, Node::HEALTH_UNKNOWN, Node::HEALTH_BAD, Node::HEALTH_GOOD,
+                    Node::HEALTH_UNKNOWN, Node::HEALTH_GOOD, Node::HEALTH_BAD, Node::HEALTH_BAD, Node::HEALTH_UNKNOWN,
+                    Node::HEALTH_BAD, Node::HEALTH_UNKNOWN, Node::HEALTH_BAD, Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN,
+                    Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN,
+                    Node::HEALTH_UNKNOWN, Node::HEALTH_BAD, Node::HEALTH_GOOD, Node::HEALTH_GOOD, Node::HEALTH_BAD,
+                    Node::HEALTH_BAD, Node::HEALTH_BAD, Node::HEALTH_UNKNOWN, Node::HEALTH_BAD, Node::HEALTH_GOOD,
+                    Node::HEALTH_UNKNOWN, Node::HEALTH_GOOD, Node::HEALTH_BAD, Node::HEALTH_BAD, Node::HEALTH_UNKNOWN,
+                    Node::HEALTH_BAD, Node::HEALTH_UNKNOWN, Node::HEALTH_BAD, Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN,
+                    Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN, Node::HEALTH_UNKNOWN,
+                    Node::HEALTH_UNKNOWN, Node::HEALTH_BAD, Node::HEALTH_GOOD, Node::HEALTH_GOOD, Node::HEALTH_BAD,
+
+                           Node::HEALTH_GOOD, Node::HEALTH_GOOD, Node::HEALTH_BAD, Node::HEALTH_BAD, Node::HEALTH_GOOD
+                    ));
 
         $bucket = new Bucket();
 
@@ -65,8 +91,8 @@ class SwitchBox_DHT_BucketTest extends PHPUnit_Framework_TestCase {
             $cnode = clone $node;
             $bucket->addNode($cnode);
         }
-        $this->assertEquals($bucket->getEvictions(), 38);
-        $this->assertEquals(count($bucket), 6);
+        $this->assertEquals($bucket->getEvictions(), 40);
+        $this->assertEquals(count($bucket), 5);
         $this->assertFalse($bucket->isFull());
 
     }
