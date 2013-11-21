@@ -12,7 +12,7 @@ class Utils {
      * @return string
      */
     static public function bin2hex($str, $pad_length) {
-        return str_pad(bin2hex($str), $pad_length, "0", STR_PAD_RIGHT);
+        return str_pad(bin2hex($str), $pad_length, "0", STR_PAD_LEFT);
     }
 
 
