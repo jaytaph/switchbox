@@ -15,9 +15,6 @@ class Packet {
     protected $body = null;
     /** @var  string    One of the TYPE_* constants */
     protected $type;
-//    protected $processor = null;
-
-    protected $timestamp;
 
     protected $from_ip;
     protected $from_port;
@@ -37,8 +34,6 @@ class Packet {
 
         if ($header !== null) $this->setHeader($header);
         if ($body !== null) $this->setBody($body);
-
-        $this->timestamp = time();
     }
 
     // @TODO: A packet should not concern themselves on where they came from. But might link a packet to a stream/node
