@@ -37,7 +37,7 @@ class Peer extends StreamProcessor {
         ));
 
 //        $header = $this->getStream()->createOutStreamHeader('', array(), true);
-//        $this->getStream()->send(new Packet($this->getSwitchBox(), $header, null));
+//        $this->getStream()->send(new Packet($header, null));
     }
 
 
@@ -47,7 +47,7 @@ class Peer extends StreamProcessor {
         $hash = $args['hash'];
 
         $header = $this->getStream()->createOutStreamHeader('peer', array('peer' => $hash), false);
-        return new Packet($this->getSwitchBox(), $header, null);
+        return new Packet($header, null);
     }
 
 }

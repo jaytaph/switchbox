@@ -33,7 +33,7 @@ class Seek extends StreamProcessor {
 
         // Send out our see-lines to the requestor
         $header = $this->getStream()->createOutStreamHeader('seek', array('see' => $nodes), true);
-        $this->getStream()->send(new Packet($this->getSwitchBox(), $header, null));
+        $this->getStream()->send(new Packet($header, null));
     }
 
 
@@ -61,7 +61,7 @@ class Seek extends StreamProcessor {
         $hash = $args['hash'];
 
         $header = $this->getStream()->createOutStreamHeader('seek', array('seek' => $hash), false);
-        return new Packet($this->getSwitchBox(), $header, null);
+        return new Packet($header, null);
     }
 
 }

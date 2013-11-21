@@ -22,7 +22,7 @@ class Ping extends PacketHandler {
     /**
      */
     static public function generate(SwitchBox $switchbox) {
-        return new Packet($switchbox, array(), null);
+        return new Packet(array(), null);
 
     }
 

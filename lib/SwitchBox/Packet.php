@@ -25,13 +25,10 @@ class Packet {
     const TYPE_PING     = "ping";
 
     /**
-     * @param Switchbox $switchbox
      * @param null $header
      * @param null $body
      */
-    public function __construct(Switchbox $switchbox, $header = null, $body = null) {
-        $this->switchbox = $switchbox;
-
+    public function __construct($header = null, $body = null) {
         if ($header !== null) $this->setHeader($header);
         if ($body !== null) $this->setBody($body);
     }
@@ -86,17 +83,16 @@ class Packet {
     }
 
     /**
-     * @param SwitchBox $switchbox
      * @param $bindata
      * @param null $ip
      * @param null $port
      * @return Packet
      */
-    static public function decode(SwitchBox $switchbox, $bindata, $ip = null, $port = null) {
+    static public function decode($bindata, $ip = null, $port = null) {
         $res = unpack('nlen', substr($bindata, 0, 2));
         $json = substr($bindata, 2, $res['len']);
         $body = substr($bindata, 2 + $res['len']);
-        $packet = new Packet($switchbox, json_decode($json, true), $body);
+        $packet = new Packet(json_decode($json, true), $body);
 
         // set packet's originating IP and port number
         if ($ip && $port) {

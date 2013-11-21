@@ -92,7 +92,7 @@ class Connect extends StreamProcessor {
         $header = $this->getStream()->createOutStreamHeader('connect', array('ip' => $args['ip'], 'port' => $args['port']), true);
         print_r($header);
         print_r($args);
-        return new Packet($this->getSwitchBox(), $header, KeyPair::convertPemToDer($args['pub_key']));
+        return new Packet($header, KeyPair::convertPemToDer($args['pub_key']));
     }
 
 }
