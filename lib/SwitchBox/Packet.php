@@ -15,9 +15,6 @@ class Packet {
     protected $body = null;
     /** @var  string    One of the TYPE_* constants */
     protected $type;
-//    protected $processor = null;
-
-    protected $timestamp;
 
     protected $from_ip;
     protected $from_port;
@@ -28,17 +25,12 @@ class Packet {
     const TYPE_PING     = "ping";
 
     /**
-     * @param Switchbox $switchbox
      * @param null $header
      * @param null $body
      */
-    public function __construct(Switchbox $switchbox, $header = null, $body = null) {
-        $this->switchbox = $switchbox;
-
+    public function __construct($header = null, $body = null) {
         if ($header !== null) $this->setHeader($header);
         if ($body !== null) $this->setBody($body);
-
-        $this->timestamp = time();
     }
 
     // @TODO: A packet should not concern themselves on where they came from. But might link a packet to a stream/node
@@ -91,17 +83,16 @@ class Packet {
     }
 
     /**
-     * @param SwitchBox $switchbox
      * @param $bindata
      * @param null $ip
      * @param null $port
      * @return Packet
      */
-    static public function decode(SwitchBox $switchbox, $bindata, $ip = null, $port = null) {
+    static public function decode($bindata, $ip = null, $port = null) {
         $res = unpack('nlen', substr($bindata, 0, 2));
         $json = substr($bindata, 2, $res['len']);
         $body = substr($bindata, 2 + $res['len']);
-        $packet = new Packet($switchbox, json_decode($json, true), $body);
+        $packet = new Packet(json_decode($json, true), $body);
 
         // set packet's originating IP and port number
         if ($ip && $port) {

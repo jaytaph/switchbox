@@ -141,7 +141,7 @@ class Line extends PacketHandler {
         $cipher->setKey($to->getEncryptionKey());
         $body = $cipher->encrypt($body);
 
-        return new Packet($switchbox, $header, $body);
+        return new Packet($header, $body);
     }
 
 }

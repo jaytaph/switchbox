@@ -203,7 +203,7 @@ class Open extends PacketHandler {
             $header['family'] = $family;
         }
 
-        $inner_packet = new Packet($switchbox, $header, $switchbox->getKeyPair()->getPublicKey(KeyPair::FORMAT_DER));
+        $inner_packet = new Packet($header, $switchbox->getKeyPair()->getPublicKey(KeyPair::FORMAT_DER));
 
         // 6. Encrypt inner packet
         $cipher = new \Crypt_AES(CRYPT_AES_MODE_CTR);
@@ -239,7 +239,7 @@ class Open extends PacketHandler {
             'sig' => $sig,
         );
 
-        return new Packet($switchbox, $header, $body);
+        return new Packet($header, $body);
     }
 
 }
