@@ -23,23 +23,36 @@ class Utils {
      * @return string
      */
     static public function hex2bin($str) {
-        if (function_exists( 'hex2bin')) {
-            // When hash starts with leading 0's it gets cut away by PHP during string casting. Hurrah!
-            while (strlen($str) < 32) $str = "0" . $str;
+        // When hash starts with leading 0's it gets cut away by PHP during string casting. Hurrah!
+        while (strlen($str) < 32) $str = "0" . $str;
 
-            // If we have a 33 byte string (or higher), we assume it's a 64byte hash.
-            while (strlen($str) > 32 && strlen($str) < 64) $str = "0" . $str;
+        // If we have a 33 byte string (or higher), we assume it's a 64byte hash.
+        while (strlen($str) > 32 && strlen($str) < 64) $str = "0" . $str;
+
+        if (function_exists( 'hex2bin')) {
             return hex2bin($str);
         }
 
+        // @codeCoverageIgnoreStart
+        return self::_hex2bin($str);
+        // @codeCoverageIgnoreEnd
+    }
+
+    // @codeCoverageIgnoreStart
+    public static function _hex2bin($str) {
         // Pre 5.4 doesn't have hex2bin
         $sbin = "";
-        $len = strlen( $str );
+        $len = strlen($str);
+        if ($len & 1 == 1) {
+            $len++;
+            $str = "0" . $str;
+        }
         for ($i=0; $i<$len; $i+=2) {
             $sbin .= pack("H*", substr($str, $i, 2 ));
         }
         return $sbin;
     }
+    // @codeCoverageIgnoreEnd
 
 
     /**
