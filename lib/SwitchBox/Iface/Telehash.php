@@ -75,7 +75,7 @@ class Telehash extends SockHandler {
         }
 
         // Decode the packet
-        $packet = Packet::decode($this->getSwitchBox(), $buf, $ip, $port);
+        $packet = Packet::decode($buf, $ip, $port);
         if ($packet == NULL) {
             print "loop() Unknown data. Not a packet!\n";
             return;

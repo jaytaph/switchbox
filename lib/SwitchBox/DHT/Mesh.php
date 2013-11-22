@@ -26,6 +26,7 @@ class Mesh {
     public function __construct(SwitchBox $switchbox) {
         $this->switchbox = $switchbox;
 
+        // Create a bucket for each node-bit, 256 in total
         for ($i=0; $i!=256; $i++) {
             $this->buckets[$i] = new Bucket();
         }

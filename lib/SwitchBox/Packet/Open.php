@@ -45,7 +45,7 @@ class Open extends PacketHandler {
         $cipher->setKey($hash);
         $body = $cipher->decrypt($packet->getBody());
 
-        $innerPacket = Packet::decode($this->getSwitchBox(), $body);
+        $innerPacket = Packet::decode($body);
 
         $hash = hash('sha256', $this->getSwitchBox()->getKeyPair()->getPublicKey(KeyPair::FORMAT_DER));
         $innerHeader = $innerPacket->getHeader();

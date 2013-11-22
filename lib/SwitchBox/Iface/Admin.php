@@ -88,8 +88,18 @@ class Admin extends SockHandler {
         $id = mt_rand(1, 9999999); // Get a crappy ID
 
         $sock = socket_accept($sock);
+
+        $ip = ""; $port = 0;
+        socket_getpeername($sock, $ip, $port);
+
         $this->sock_clients[] = $sock;
-        $this->sock_info[] = array('sock' => $sock, 'id' => $id, 'history' => "");
+        $this->sock_info[] = array(
+            'sock' => $sock,
+            'id' => $id,
+            'history' => "",
+            'ip' => $ip,
+            'date_in' => time()
+        );
 
 
         $buf = <<< EOB
@@ -157,5 +167,14 @@ EOB;
             $this->_sock_write($sock, $this->getPrompt());
         }
     }
+
+
+    /**
+     * @return array
+     */
+    function getSockInfo() {
+        return $this->sock_info;
+    }
+
 
 }

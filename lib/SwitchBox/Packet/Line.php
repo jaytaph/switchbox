@@ -76,7 +76,7 @@ class Line extends PacketHandler {
         $cipher->setIv(Utils::hex2bin($header['iv']));
         $cipher->setKey($from->getDecryptionKey());
 //        print "Decrypting with IV/KEY: ".$header['iv']." / ".bin2hex($from->getDecryptionKey())."\n";
-        $inner_packet = Packet::decode($this->getSwitchBox(), $cipher->decrypt($packet->getBody()));
+        $inner_packet = Packet::decode($cipher->decrypt($packet->getBody()));
 
         $inner_header = $inner_packet->getHeader();
         print_r($inner_header);
