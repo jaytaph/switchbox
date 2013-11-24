@@ -17,9 +17,9 @@ class Node {
     const HEALTH_BAD     = "bad";
     const HEALTH_UNKNOWN = "unknown";
 
-    const MAX_ACTIVITY_TIME      = 60;      // Maximum amount of seconds past since last activity when this node is considered a good node.
-    const MAX_IDLE_TIME          = 600;      // Number of seconds in which we must receive at least SOME activity.
-    const MAX_PING_RETRIES       = 5;       // Number of pings we send out. If we hit this value, the node is considered a bad node.
+    const MAX_ACTIVITY_TIME      = 10;      // Maximum amount of seconds past since last activity when this node is considered a good node.
+    const MAX_IDLE_TIME          = 60;      // Number of seconds in which we must receive at least SOME activity.
+    const MAX_PING_RETRIES       = 3;       // Number of pings we send out. If we hit this value, the node is considered a bad node.
 
     /** @var Hash */
     protected $hash;                        // Hash object for this node
@@ -107,6 +107,10 @@ class Node {
         $this->ping_count = 0;
     }
 
+    public function addPing() {
+        $this->ping_count++;
+    }
+
     public function getLastActivityTs() {
         return $this->last_activity_ts;
     }
@@ -173,7 +177,6 @@ class Node {
     }
 
     public function addStream(Stream $stream) {
-        var_dump($stream);
         print  "*** Adding stream: ".$stream->getId()."\n";
         $this->streams[$stream->getId()] = $stream;
     }

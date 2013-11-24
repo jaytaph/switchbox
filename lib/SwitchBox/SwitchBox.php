@@ -200,6 +200,7 @@ class SwitchBox {
         print ANSI_CYAN . "*** Maintenance Start". ANSI_RESET . "\n";
 //        $this->_seekNodes();
         $this->_connectToNodes();
+        $this->_pingNodes();
 //        $this->_closeIdleStreams();
         print ANSI_CYAN . "*** Maintenance End". ANSI_RESET . "\n";
     }
@@ -217,6 +218,19 @@ class SwitchBox {
                 $stream->addProcessor("seek", new LineSeek($stream));
                 $stream->start(array('hash' => $hash));
             }
+        }
+    }
+
+    protected function _pingNodes() {
+        foreach ($this->getMesh()->getConnectedNodes() as $node) {
+            if ($node->getHealth() == Node::HEALTH_UNKNOWN) {
+                // Send another ping
+                $stream = new Stream($this, $node);
+                $stream->addProcessor("seek", new LineSeek($stream));
+                $stream->start(array('hash' => $this->getSelfNode()->getName()));
+                $node->addPing();
+            }
+
         }
     }
 
