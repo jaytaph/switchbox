@@ -57,7 +57,6 @@ class Line extends PacketHandler {
     public function process(Packet $packet)
     {
         $header = $packet->getHeader();
-        print_r($header);
 
         // Are we actually a line packet?
         if ($header['type'] != "line") {
@@ -71,15 +70,17 @@ class Line extends PacketHandler {
             return;
         }
 
+        // We received a packet, update TS
+        $from->updateActivityTs();
+
         // Decrypt line body with inner packet
         $cipher = new \Crypt_AES(CRYPT_AES_MODE_CTR);
         $cipher->setIv(Utils::hex2bin($header['iv']));
         $cipher->setKey($from->getDecryptionKey());
 //        print "Decrypting with IV/KEY: ".$header['iv']." / ".bin2hex($from->getDecryptionKey())."\n";
-        $inner_packet = Packet::decode($this->getSwitchBox(), $cipher->decrypt($packet->getBody()));
+        $inner_packet = Packet::decode($cipher->decrypt($packet->getBody()));
 
         $inner_header = $inner_packet->getHeader();
-        print_r($inner_header);
         $stream = $from->getStream($inner_header['c']);
         if (! $stream) {
             $stream = new Stream($this->getSwitchBox(), $from, $inner_header['c']);

@@ -46,7 +46,7 @@ class Peer extends StreamProcessor {
         print "*** generate PEER\n";
         $hash = $args['hash'];
 
-        $header = $this->getStream()->createOutStreamHeader('peer', array('peer' => $hash), false);
+        $header = $this->getStream()->createOutStreamHeader('peer', array('peer' => $hash), true);
         return new Packet($header, null);
     }
 
