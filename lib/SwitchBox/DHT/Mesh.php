@@ -44,15 +44,6 @@ class Mesh {
     }
 
 
-    /**
-     * Return the switchbox
-     *
-     * @return \SwitchBox\SwitchBox
-     */
-    public function getSwitchbox()
-    {
-        return $this->switchbox;
-    }
 
 
     /**
@@ -76,7 +67,7 @@ class Mesh {
      */
     public function addNode(Node $node) {
         // Add node to correct bucket
-        $bucket_id = $this->getSwitchBox()->getSelfNode()->getHash()->getDistanceId($node->getHash());
+        $bucket_id = $this->switchbox->getSelfNode()->getHash()->getDistanceId($node->getHash());
         $this->buckets[$bucket_id]->addNode($node);
 
         // Add to array

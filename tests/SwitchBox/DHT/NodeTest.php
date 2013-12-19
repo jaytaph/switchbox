@@ -77,6 +77,15 @@ EOD;
         $this->assertGreaterThan($ts1, $ts2);
     }
 
+    function testPing() {
+        $node = new Node("127.0.0.1", 42424, $this->pub, null);
+        $this->assertEquals($node->getPingCount(), 0);
+        $node->addPing();
+        $this->assertEquals($node->getPingCount(), 1);
+        $node->addPing();
+        $this->assertEquals($node->getPingCount(), 2);
+    }
+
     function testLines() {
         $node = new Node("127.0.0.1", 42424, $this->pub, null);
         $this->assertEmpty($node->getLineIn());
