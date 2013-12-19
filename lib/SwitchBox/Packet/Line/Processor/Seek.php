@@ -38,7 +38,12 @@ class Seek extends StreamProcessor {
 
 
     protected function _see($see_line) {
-        list($hash, $ip, $port) = explode(',', $see_line, 3);
+        if (strpos($see_line, ',') !== false) {
+            list($hash, $ip, $port) = explode(',', $see_line, 3);
+        } else {
+            $hash = $see_line;
+            $ip = $port = 0;
+        }
 
         $node = $this->getSwitchBox()->getMesh()->getNode($hash);
         if ($node) {

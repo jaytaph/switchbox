@@ -115,6 +115,10 @@ class Node {
         return $this->last_activity_ts;
     }
 
+    public function hasAddress() {
+        return ($this->getIp() != 0 && $this->getPort() != 0);
+    }
+
 
     /**
      * @param $public_key

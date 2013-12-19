@@ -223,7 +223,7 @@ class SwitchBox {
 
     protected function _pingNodes() {
         foreach ($this->getMesh()->getConnectedNodes() as $node) {
-            if ($node->getHealth() == Node::HEALTH_UNKNOWN) {
+            if ($node->getHealth() == Node::HEALTH_UNKNOWN && $node->hasAddress()) {
                 // Send another ping
                 $stream = new Stream($this, $node);
                 $stream->addProcessor("seek", new LineSeek($stream));

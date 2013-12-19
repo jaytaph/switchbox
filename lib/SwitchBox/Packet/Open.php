@@ -125,7 +125,6 @@ class Open extends PacketHandler {
         $node->recalcEncryptionKeys();
 
 
-
         if ($node->isConnected()) {
             print ANSI_GREEN."Finalized connection with ".(string)$node."!!!!!".ANSI_RESET."\n";
             print_r($node->getInfo());
@@ -225,6 +224,12 @@ class Open extends PacketHandler {
     }
 
 
+    /**
+     * Verifies the public key in order to make sure it's valid.
+     *
+     * @param $key
+     * @throws \DomainException
+     */
     static protected function _verifyKey($key) {
         // 1. Verify public key
         $res = openssl_pkey_get_public($key);
