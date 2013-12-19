@@ -4,7 +4,7 @@ namespace SwitchBox\Iface\Admin\Commands;
 
 use SwitchBox\Iface\SockHandler;
 use SwitchBox\Packet\Line\Processor\Seek as LineSeek;
-use SwitchBox\Packet\Line\Stream;
+use SwitchBox\Packet\Line\Channel;
 use SwitchBox\SwitchBox;
 
 class Ping implements iCmd {
@@ -35,9 +35,9 @@ class Ping implements iCmd {
     protected function _ping(SwitchBox $switchbox, $hash) {
         $node = $switchbox->getMesh()->getNode($hash);
 
-        $stream = new Stream($switchbox, $node);
-        $stream->addProcessor("seek", new LineSeek($stream));
-        $stream->start(array(
+        $channel = new Channel($switchbox, $node);
+        $channel->addProcessor("seek", new LineSeek($channel));
+        $channel->start(array(
             'hash' => $switchbox->getSelfNode()->getName(),
         ));
     }

@@ -33,7 +33,7 @@ class Packet {
         if ($body !== null) $this->setBody($body);
     }
 
-    // @TODO: A packet should not concern themselves on where they came from. But might link a packet to a stream/node
+    // @TODO: A packet should not concern themselves on where they came from. But might link a packet to a channel/node
     public function setFrom($ip, $port) {
         $this->from_ip = $ip;
         $this->from_port = $port;
@@ -106,6 +106,7 @@ class Packet {
      * @return string
      */
     public function encode() {
+        print_r($this->getHeader());
         $json = json_encode($this->getHeader());
         $len = strlen($json);
 

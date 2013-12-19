@@ -3,7 +3,7 @@
 namespace SwitchBox\Iface\Admin\Commands;
 
 use SwitchBox\Iface\SockHandler;
-use SwitchBox\Packet\Line\Stream;
+use SwitchBox\Packet\Line\Channel;
 use SwitchBox\SwitchBox;
 use SwitchBox\Packet\Ping;
 use SwitchBox\Packet\Line\Processor\Peer as LinePeer;
@@ -35,9 +35,9 @@ class Peer implements iCmd {
                 // Don't ask ourselves.
                 if ($node->getName() == $switchbox->getSelfNode()->getName()) continue;
 
-                $stream = new Stream($switchbox, $node);
-                $stream->addProcessor("peer", new LinePeer($stream));
-                $stream->start(array(
+                $channel = new Channel($switchbox, $node);
+                $channel->addProcessor("peer", new LinePeer($channel));
+                $channel->start(array(
                     'hash' => $destination->getName(),
                 ));
             }

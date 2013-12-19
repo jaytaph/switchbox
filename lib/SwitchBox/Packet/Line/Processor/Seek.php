@@ -5,7 +5,7 @@ namespace SwitchBox\Packet\Line\Processor;
 use SwitchBox\DHT\Node;
 use SwitchBox\Packet;
 
-class Seek extends StreamProcessor {
+class Seek extends ChannelProcessor {
 
     public function processIncoming(Packet $packet)
     {
@@ -32,13 +32,18 @@ class Seek extends StreamProcessor {
         }
 
         // Send out our see-lines to the requestor
-        $header = $this->getStream()->createOutStreamHeader('seek', array('see' => $nodes), true);
-        $this->getStream()->send(new Packet($header, null));
+        $header = $this->getChannel()->createOutChannelHeader('seek', array('see' => $nodes), true);
+        $this->getChannel()->send(new Packet($header, null));
     }
 
 
     protected function _see($see_line) {
-        list($hash, $ip, $port) = explode(',', $see_line, 3);
+        if (strpos($see_line, ',') !== false) {
+            list($hash, $ip, $port) = explode(',', $see_line, 3);
+        } else {
+            $hash = $see_line;
+            $ip = $port = 0;
+        }
 
         $node = $this->getSwitchBox()->getMesh()->getNode($hash);
         if ($node) {
@@ -60,7 +65,7 @@ class Seek extends StreamProcessor {
         print "*** generate SEEK\n";
         $hash = $args['hash'];
 
-        $header = $this->getStream()->createOutStreamHeader('seek', array('seek' => $hash), false);
+        $header = $this->getChannel()->createOutChannelHeader('seek', array('seek' => $hash), false);
         return new Packet($header, null);
     }
 

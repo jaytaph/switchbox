@@ -7,7 +7,7 @@ use SwitchBox\DHT\KeyPair;
 use SwitchBox\SwitchBox;
 use SwitchBox\Utils;
 use SwitchBox\Packet;
-use SwitchBox\Packet\Line\Stream;
+use SwitchBox\Packet\Line\Channel;
 
 class Open extends PacketHandler {
 
@@ -125,15 +125,14 @@ class Open extends PacketHandler {
         $node->recalcEncryptionKeys();
 
 
-
         if ($node->isConnected()) {
             print ANSI_GREEN."Finalized connection with ".(string)$node."!!!!!".ANSI_RESET."\n";
             print_r($node->getInfo());
 
             // Try and do a seek to ourselves, this allows us to find our outside IP/PORT
-            $stream = new Stream($this->getSwitchBox(), $node);
-            $stream->addProcessor("seek", new Line\Processor\Seek($stream));
-            $stream->start(array(
+            $channel = new Channel($this->getSwitchBox(), $node);
+            $channel->addProcessor("seek", new Line\Processor\Seek($channel));
+            $channel->start(array(
                 'hash' => $this->getSwitchBox()->getSelfNode()->getName(),
             ));
         } else {
@@ -156,36 +155,12 @@ class Open extends PacketHandler {
      * @throws \DomainException
      */
     static public function generate(SwitchBox $switchbox, Node $node, $family = null) {
-        // 0. Setup some stuff
-
+        // Create a random lineout
         $node->setLineOut(Utils::bin2hex(openssl_random_pseudo_bytes(16), 32));
         $node->recalcEncryptionKeys();
 
-        // 1. Verify public key
-        $res = openssl_pkey_get_public($node->getPublicKey());
-        if (! $res) {
-            print ANSI_RED . "Error while getting the public key!\n";
-            $n = $node->getPublicKey();
-            print_r($n);
-            print ANSI_RESET;
-            return null;
-        } else {
-            print ANSI_GREEN . "\n";
-            $n = $node->getPublicKey();
-            print_r($n);
-            print ANSI_RESET;
-        }
-        $details = openssl_pkey_get_details($res);
-
-        if (! $details) {
-            throw new \DomainException("not a valid public key!");
-        }
-        if ($details['type'] != OPENSSL_KEYTYPE_RSA) {
-            throw new \DomainException("public key is not a RSA key");
-        }
-        if ($details['bits'] < 2048) {
-            throw new \DomainException("public key must be at least 2048 bits");
-        }
+        // Verify given public key
+        self::_verifyKey($node->getPublicKey());
 
         // 2.create IV
         $iv = openssl_random_pseudo_bytes(16);
@@ -193,17 +168,8 @@ class Open extends PacketHandler {
         // 4. SHA256 hash ECC key
         $hash = hash('sha256', Utils::hex2bin($node->getEccOurKeypair()->pubkey->encode()), true);
 
-        // 5. Form inner packet
-        $header = array(
-            'to' => $node->getName(),
-            'at' => floor(microtime(true) * 1000),
-            'line' => $node->getLineOut(),
-        );
-        if ($family) {
-            $header['family'] = $family;
-        }
+        $inner_packet = self::_createInnerPacket($switchbox->getKeyPair()->getPublicKey(KeyPair::FORMAT_DER), $node, $family);
 
-        $inner_packet = new Packet($header, $switchbox->getKeyPair()->getPublicKey(KeyPair::FORMAT_DER));
 
         // 6. Encrypt inner packet
         $cipher = new \Crypt_AES(CRYPT_AES_MODE_CTR);
@@ -240,6 +206,52 @@ class Open extends PacketHandler {
         );
 
         return new Packet($header, $body);
+    }
+
+    static protected function _createInnerPacket($public_key, Node $node, $family = "")
+    {
+        // 5. Form inner packet
+        $header = array(
+            'to' => $node->getName(),
+            'at' => floor(microtime(true) * 1000),
+            'line' => $node->getLineOut(),
+        );
+        if ($family) {
+            $header['family'] = $family;
+        }
+
+        return new Packet($header, $public_key);
+    }
+
+
+    /**
+     * Verifies the public key in order to make sure it's valid.
+     *
+     * @param $key
+     * @throws \DomainException
+     */
+    static protected function _verifyKey($key) {
+        // 1. Verify public key
+        $res = openssl_pkey_get_public($key);
+        if (! $res) {
+            throw new \DomainException("Error while getting the public key!");
+        }
+
+        print ANSI_GREEN . "\n";
+        print_r($key);
+        print ANSI_RESET;
+
+        $details = openssl_pkey_get_details($res);
+
+        if (! $details) {
+            throw new \DomainException("not a valid public key!");
+        }
+        if ($details['type'] != OPENSSL_KEYTYPE_RSA) {
+            throw new \DomainException("public key is not a RSA key");
+        }
+        if ($details['bits'] < 2048) {
+            throw new \DomainException("public key must be at least 2048 bits");
+        }
     }
 
 }

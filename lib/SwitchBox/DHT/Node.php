@@ -8,7 +8,7 @@ use phpecc\Point;
 use phpecc\PrivateKey;
 use phpecc\PublicKey;
 use phpecc\Utilities\Gmp;
-use SwitchBox\Packet\Line\Stream;
+use SwitchBox\Packet\Line\Channel;
 use SwitchBox\Utils;
 
 class Node {
@@ -47,8 +47,8 @@ class Node {
     /** @var string */
     protected $decryption_key;              // Line decryption key
 
-    /** @var Stream[] */
-    protected $streams = array();           // Array of currently running streams for this node
+    /** @var Channel[] */
+    protected $channels = array();           // Array of currently running channels for this node
 
     /** @var int */
     protected $open_at;
@@ -96,7 +96,7 @@ class Node {
         // Init our vars
         $this->ping_count = 0;
         $this->last_activity_ts = time();
-        $this->streams = array();
+        $this->channels = array();
     }
 
     public function updateActivityTs() {
@@ -113,6 +113,10 @@ class Node {
 
     public function getLastActivityTs() {
         return $this->last_activity_ts;
+    }
+
+    public function hasAddress() {
+        return ($this->getIp() != 0 && $this->getPort() != 0);
     }
 
 
@@ -169,28 +173,28 @@ class Node {
 
     /**
      * @param $id
-     * @return Stream|null
+     * @return Channel|null
      */
-    public function getStream($id)
+    public function getChannel($id)
     {
-        return isset($this->streams[$id]) ? $this->streams[$id] : null;
+        return isset($this->channels[$id]) ? $this->channels[$id] : null;
     }
 
-    public function addStream(Stream $stream) {
-        print  "*** Adding stream: ".$stream->getId()."\n";
-        $this->streams[$stream->getId()] = $stream;
+    public function addChannel(Channel $channel) {
+        print  "*** Adding channel: ".$channel->getId()."\n";
+        $this->channels[$channel->getId()] = $channel;
     }
 
-    public function removeStream(Stream $stream) {
-        print  "*** Removing stream: ".$stream->getId()."\n";
-        unset($this->streams[$stream->getId()]);
+    public function removeChannel(Channel $channel) {
+        print  "*** Removing channel: ".$channel->getId()."\n";
+        unset($this->channels[$channel->getId()]);
     }
 
     /**
-     * @return Stream[]
+     * @return Channel[]
      */
-    public function getStreams() {
-        return $this->streams;
+    public function getChannels() {
+        return $this->channels;
     }
 
 

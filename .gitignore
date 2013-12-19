@@ -10,5 +10,6 @@ composer.lock
 # Initial seed.json
 seed.json
 
-# Code coverage file
+# Code coverage files
 .coverage.xml
+.html

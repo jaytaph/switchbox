@@ -7,48 +7,48 @@ use SwitchBox\Packet;
 use SwitchBox\Packet\Line\Processor\Connect;
 use SwitchBox\Packet\Line\Processor\Peer;
 use SwitchBox\Packet\Line\Processor\Seek;
-use SwitchBox\Packet\Line\Processor\StreamProcessor;
-use SwitchBox\Packet\Line\Stream;
+use SwitchBox\Packet\Line\Processor\ChannelProcessor;
+use SwitchBox\Packet\Line\Channel;
 use SwitchBox\SwitchBox;
 use SwitchBox\Utils;
 
 class Line extends PacketHandler {
 
-    /** @var StreamProcessor[] */
-    protected $stream_processors = array();         // All the stream processors that are available
+    /** @var ChannelProcessor[] */
+    protected $channel_processors = array();         // All the channel processors that are available
 
 
     /**
-     * Add a custom stream processor
+     * Add a custom channel processor
      *
      * @param $type
      * @param $class
      * @throws \InvalidArgumentException
      */
-    public function addCustomStreamProcessor($type, $class) {
+    public function addCustomChannelProcessor($type, $class) {
         $tmp = new $class(null);
-        if (! $tmp instanceof StreamProcessor) {
-            throw new \InvalidArgumentException("Class must be an instance of StreamProcessor!");
+        if (! $tmp instanceof ChannelProcessor) {
+            throw new \InvalidArgumentException("Class must be an instance of ChannelProcessor!");
         }
 
-        $this->stream_processors[$type] = $class;
+        $this->channel_processors[$type] = $class;
     }
 
 
     /**
      * @param $type
-     * @return null|StreamProcessor
+     * @return null|ChannelProcessor
      */
-    public function getCustomStreamProcessor($type) {
-        if (isset($this->stream_processors[$type])) {
-            return $this->stream_processors[$type];
+    public function getCustomChannelProcessor($type) {
+        if (isset($this->channel_processors[$type])) {
+            return $this->channel_processors[$type];
         }
         return null;
     }
 
 
     /**
-     * Process a line packet by decoding and passing it to the correct stream-handler
+     * Process a line packet by decoding and passing it to the correct channel-handler
      *
      * @param Packet $packet
      * @return mixed|void
@@ -81,40 +81,40 @@ class Line extends PacketHandler {
         $inner_packet = Packet::decode($cipher->decrypt($packet->getBody()));
 
         $inner_header = $inner_packet->getHeader();
-        $stream = $from->getStream($inner_header['c']);
-        if (! $stream) {
-            $stream = new Stream($this->getSwitchBox(), $from, $inner_header['c']);
+        $channel = $from->getChannel($inner_header['c']);
+        if (! $channel) {
+            $channel = new Channel($this->getSwitchBox(), $from, $inner_header['c']);
 
             // There is an incoming request. We must respond to it
-            print "No stream found. Creating new stream...\n";
+            print "No channel found. Creating new channel...\n";
 
-            // Stream hasn't been opened yet. Let's create a stream
+            // Channel hasn't been opened yet. Let's create a channel
             switch ($inner_header['type']) {
                 case "connect" :
-                    $stream->addProcessor("connect", new Connect($stream));
+                    $channel->addProcessor("connect", new Connect($channel));
                     break;
                 case "peer" :
-                    $stream->addProcessor("peer", new Peer($stream));
+                    $channel->addProcessor("peer", new Peer($channel));
                     break;
                 case "seek" :
-                    $stream->addProcessor("seek", new Seek($stream));
+                    $channel->addProcessor("seek", new Seek($channel));
                     break;
                 default :
                     // Let's try and iterate our custom handlers to see if we have anything that matches
-                    $processor = $this->getCustomStreamProcessor($inner_header['type']);
+                    $processor = $this->getCustomChannelProcessor($inner_header['type']);
                     if ($processor) {
-                        $stream->addProcessor($inner_header['type'], new $processor($stream));
+                        $channel->addProcessor($inner_header['type'], new $processor($channel));
                     } else {
                         print ANSI_RED . "Unknown incoming type in line: ".print_r($inner_header, true).ANSI_RESET . "\n";
                         return;
                     }
             }
 
-            print ANSI_YELLOW . "CREATED ".$stream->getType()." STREAM " . ANSI_RESET . "\n";
+            print ANSI_YELLOW . "CREATED ".$channel->getType()." CHANNEL " . ANSI_RESET . "\n";
         }
 
-        // Process already existing stream, make sure end/acks etc are done properly
-        $stream->process($inner_packet);
+        // Process already existing channel, make sure end/acks etc are done properly
+        $channel->process($inner_packet);
     }
 
 

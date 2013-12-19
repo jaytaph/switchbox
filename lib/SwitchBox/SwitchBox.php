@@ -6,7 +6,7 @@ use SwitchBox\DHT\KeyPair;
 use SwitchBox\DHT\Mesh;
 use SwitchBox\DHT\Node;
 use SwitchBox\Iface\iSockHandler;
-use SwitchBox\Packet\Line\Stream;
+use SwitchBox\Packet\Line\Channel;
 use SwitchBox\Packet\Open;
 use SwitchBox\Packet\Line\Processor\Peer as LinePeer;
 use SwitchBox\Packet\Line\Processor\Seek as LineSeek;
@@ -30,7 +30,7 @@ define('ANSI_WHITE',   "\x1b[37;1m");
 
 class SwitchBox {
     const SELECT_TIMEOUT            = 5;        // Nr of seconds before socket_select() will timeout to do housekeeping
-    const MAX_IDLE_STREAM_TIME      = 15;       // Nr of seconds a stream can be idle before it's closed
+    const MAX_IDLE_CHANELL_TIME     = 15;       // Nr of seconds a channel can be idle before it's closed
 
     /** @var \SwitchBox\DHT\KeyPair */
     protected $keypair;
@@ -201,7 +201,7 @@ class SwitchBox {
 //        $this->_seekNodes();
         $this->_connectToNodes();
         $this->_pingNodes();
-//        $this->_closeIdleStreams();
+//        $this->_closeIdleChannels();
         print ANSI_CYAN . "*** Maintenance End". ANSI_RESET . "\n";
     }
 
@@ -214,20 +214,20 @@ class SwitchBox {
 
         foreach ($hashes as $hash) {
             foreach ($this->getMesh()->getClosestForHash($hash) as $node) {
-                $stream = new Stream($this, $node);
-                $stream->addProcessor("seek", new LineSeek($stream));
-                $stream->start(array('hash' => $hash));
+                $channel = new Channel($this, $node);
+                $channel->addProcessor("seek", new LineSeek($channel));
+                $channel->start(array('hash' => $hash));
             }
         }
     }
 
     protected function _pingNodes() {
         foreach ($this->getMesh()->getConnectedNodes() as $node) {
-            if ($node->getHealth() == Node::HEALTH_UNKNOWN) {
+            if ($node->getHealth() == Node::HEALTH_UNKNOWN && $node->hasAddress()) {
                 // Send another ping
-                $stream = new Stream($this, $node);
-                $stream->addProcessor("seek", new LineSeek($stream));
-                $stream->start(array('hash' => $this->getSelfNode()->getName()));
+                $channel = new Channel($this, $node);
+                $channel->addProcessor("seek", new LineSeek($channel));
+                $channel->start(array('hash' => $this->getSelfNode()->getName()));
                 $node->addPing();
             }
 
@@ -256,9 +256,9 @@ class SwitchBox {
                 // Don't ask ourselves.
                 if ($seed->getName() == $this->getSelfNode()->getName()) continue;
 
-                $stream = new Stream($this, $seed);
-                $stream->addProcessor("peer", new LinePeer($stream));
-                $stream->start(array('hash' => $node->getName()));
+                $channel = new Channel($this, $seed);
+                $channel->addProcessor("peer", new LinePeer($channel));
+                $channel->start(array('hash' => $node->getName()));
             }
         }
     }
@@ -266,13 +266,13 @@ class SwitchBox {
     /**
      *
      */
-    protected function _closeIdleStreams() {
+    protected function _closeIdleChannels() {
         foreach ($this->getMesh()->getAllNodes() as $node) {
-            foreach ($node->getStreams() as $stream) {
-                // No activity since 30 seconds, we should close the stream
-                if ($stream->getIdleTime() > self::MAX_IDLE_STREAM_TIME) {
-                    print "Closing stream $stream \n";
-                    $node->removeStream($stream);
+            foreach ($node->getChannels() as $channel) {
+                // No activity since 30 seconds, we should close the channel
+                if ($channel->getIdleTime() > self::MAX_IDLE_CHANNEL_TIME) {
+                    print "Closing channel $channel \n";
+                    $node->removeChannel($channel);
                 }
             }
         }
@@ -288,7 +288,7 @@ class SwitchBox {
 //            throw new \UnexpectedValueException("A line processor should always be available");
 //        }
 //
-//        $lp->addCustomStreamProcessor($type, $processor);
+//        $lp->addCustomChannelProcessor($type, $processor);
 //    }
 
     /**
