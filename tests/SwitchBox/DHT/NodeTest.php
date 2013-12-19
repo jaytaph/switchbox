@@ -2,7 +2,7 @@
 
 use SwitchBox\DHT\Node;
 
-//class MockStream extends \SwitchBox\Packet\Line\Stream {
+//class MockChannel extends \SwitchBox\Packet\Line\Channel {
 //    public function setId($id) {
 //        $this->id = $id;
 //    }
@@ -32,7 +32,7 @@ EOD;
         $this->assertFalse($node->hasPublicKey());
 
         $this->assertEquals($node->getPingCount(), 0);
-        $this->assertCount(0, $node->getStreams());
+        $this->assertCount(0, $node->getChannels());
     }
 
     /**
@@ -198,28 +198,28 @@ EOD;
     }
 
 
-//    public function testStreams() {
+//    public function testChannels() {
 //        $node = new Node("127.0.0.1", 42424, $this->pub, null);
 //
-//        $stream = $this->getMockBuilder("MockStream", array("getId", "setId"))
+//        $channel = $this->getMockBuilder("MockChannel", array("getId", "setId"))
 //                    ->disableOriginalConstructor()
 //                    ->getMock();
 //
-//        $this->assertNull($node->getStream("1234"));
+//        $this->assertNull($node->getChannel("1234"));
 //
-//        $s1 = clone $stream;
+//        $s1 = clone $channel;
 //        $s1->setId(1234);
-//        $node->addStream($s1);
-//        $this->assertEquals($node->getStream("1234")->getId(), $s1->getId());
+//        $node->addChannel($s1);
+//        $this->assertEquals($node->getChannel("1234")->getId(), $s1->getId());
 //
-//        $s2 = clone $stream;
+//        $s2 = clone $channel;
 //        $s2->setId("5678");
-//        $node->addStream($s2);
-//        $this->assertEquals($node->getStream("1234"), $s1);
-//        $this->assertEquals($node->getStream("5678"), $s2);
+//        $node->addChannel($s2);
+//        $this->assertEquals($node->getChannel("1234"), $s1);
+//        $this->assertEquals($node->getChannel("5678"), $s2);
 //
-//        $node->removeStream($s1);
-//        $this->assertNull($node->getStream("1234"));
+//        $node->removeChannel($s1);
+//        $this->assertNull($node->getChannel("1234"));
 //    }
 
 
