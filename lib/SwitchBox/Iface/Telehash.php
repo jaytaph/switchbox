@@ -3,7 +3,7 @@
 namespace SwitchBox\Iface;
 
 use SwitchBox\Packet\Line;
-use SwitchBox\Packet\Line\Processor\StreamProcessor;
+use SwitchBox\Packet\Line\Processor\ChannelProcessor;
 use SwitchBox\Packet\Open;
 use SwitchBox\Packet\PacketHandler;
 use SwitchBox\Packet\Ping;
@@ -15,7 +15,7 @@ class Telehash extends SockHandler {
     /** @var SwitchBox */
     protected $switchbox;
 
-    /** @var StreamProcessor[]  */
+    /** @var ChannelProcessor[]  */
     protected $packet_handlers = array();           // Handlers that deal with the different packets
 
 
@@ -106,7 +106,7 @@ class Telehash extends SockHandler {
 
     /**
      * @param $type
-     * @return StreamProcessor
+     * @return ChannelProcessor
      */
     public function getPacketHandler($type) {
         if (isset($this->packet_handlers[$type])) {
@@ -121,12 +121,12 @@ class Telehash extends SockHandler {
      * @param callable $cb
      * @throws \OutOfRangeException
      */
-    public function addStreamProcessor($type, callable $cb) {
+    public function addChannelProcessor($type, callable $cb) {
         // Find the line processor
         if (! isset($this->packet_handlers[Packet::TYPE_LINE])) {
             throw new \OutOfRangeException("Cannot find the LINE type packet handler");
         }
-        $this->packet_handlers[Packet::TYPE_LINE]->addStreamProcessor($type, $cb);
+        $this->packet_handlers[Packet::TYPE_LINE]->addChannelProcessor($type, $cb);
     }
 
 

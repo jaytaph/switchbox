@@ -3,9 +3,9 @@
 namespace SwitchBox\Packet\Line\Processor;
 
 use SwitchBox\Packet;
-use SwitchBox\Packet\Line\Stream;
+use SwitchBox\Packet\Line\Channel;
 
-class Relay extends StreamProcessor {
+class Relay extends ChannelProcessor {
 
     public function processIncoming(Packet $packet)
     {

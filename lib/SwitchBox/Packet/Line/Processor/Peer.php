@@ -3,9 +3,9 @@
 namespace SwitchBox\Packet\Line\Processor;
 
 use SwitchBox\Packet;
-use SwitchBox\Packet\Line\Stream;
+use SwitchBox\Packet\Line\Channel;
 
-class Peer extends StreamProcessor {
+class Peer extends ChannelProcessor {
 
     public function processIncoming(Packet $packet)
     {
@@ -28,16 +28,16 @@ class Peer extends StreamProcessor {
         }
 
         // Make a connection request to the other side
-        $stream = new Stream($this->getSwitchbox(), $node);
-        $stream->addProcessor("connect", new Connect($stream));
-        $stream->start(array(
+        $channel = new Channel($this->getSwitchbox(), $node);
+        $channel->addProcessor("connect", new Connect($channel));
+        $channel->start(array(
             'ip' => $this->getNode()->getIp(),
             'port' => $this->getNode()->getPort(),
             'pub_key' => $this->getNode()->getPublicKey(),
         ));
 
-//        $header = $this->getStream()->createOutStreamHeader('', array(), true);
-//        $this->getStream()->send(new Packet($header, null));
+//        $header = $this->getChannel()->createOutChannelHeader('', array(), true);
+//        $this->getChannel()->send(new Packet($header, null));
     }
 
 
@@ -46,7 +46,7 @@ class Peer extends StreamProcessor {
         print "*** generate PEER\n";
         $hash = $args['hash'];
 
-        $header = $this->getStream()->createOutStreamHeader('peer', array('peer' => $hash), true);
+        $header = $this->getChannel()->createOutChannelHeader('peer', array('peer' => $hash), true);
         return new Packet($header, null);
     }
 

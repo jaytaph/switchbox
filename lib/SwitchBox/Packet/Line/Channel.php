@@ -1,20 +1,20 @@
 <?php
 /**
- * Stream class. Encapsulates a reliable data-flow of packets over UDP
+ * Channel class. Encapsulates a reliable data-flow of packets over UDP
  */
 
 namespace SwitchBox\Packet\Line;
 
 use SwitchBox\DHT\Node;
 use SwitchBox\Packet\Line;
-use SwitchBox\Packet\Line\Processor\StreamProcessor;
+use SwitchBox\Packet\Line\Processor\ChannelProcessor;
 use SwitchBox\Packet;
 use SwitchBox\SwitchBox;
 use SwitchBox\Utils;
 
-class Stream {
+class Channel {
     /** @var string */
-    protected $id;                      // Hexadecimal stream ID
+    protected $id;                      // Hexadecimal channel ID
     /** @var \SwitchBox\DHT\Node */
     protected $to;                      // Destination node
     /** @var array */
@@ -29,10 +29,10 @@ class Stream {
     protected $custom;                  // true when this is a custom type
     /** @var \SwitchBox\SwitchBox */
     protected $switchbox;
-    /** @var StreamProcessor */
-    protected $processor;               // Processor to process the packets in this stream
+    /** @var ChannelProcessor */
+    protected $processor;               // Processor to process the packets in this channel
     /** @var int */
-    protected $last_activity_ts;        // last time there was activity on this stream
+    protected $last_activity_ts;        // last time there was activity on this channel
     /** @var bool  */
     protected $end = false;
 
@@ -47,7 +47,7 @@ class Stream {
      */
     public function __construct(SwitchBox $switchbox, Node $to, $id = null) {
         $this->id = $id ? $id : Utils::bin2hex(openssl_random_pseudo_bytes(16), 32);
-        print "New Stream ID: ".$this->id."\n";
+        print "New Channel ID: ".$this->id."\n";
         $this->to = $to;
         $this->switchbox = $switchbox;
 
@@ -61,16 +61,16 @@ class Stream {
 
         $this->end = false;
 
-        // Add this new stream to the destination node
-        $to->addStream($this);
+        // Add this new channel to the destination node
+        $to->addChannel($this);
     }
 
 
     /**
      * @param $type
-     * @param StreamProcessor $processor
+     * @param ChannelProcessor $processor
      */
-    public function addProcessor($type, StreamProcessor $processor) {
+    public function addProcessor($type, ChannelProcessor $processor) {
         $this->type = $type;
         $this->custom = (substr($type, 0, 1) == "_");
 
@@ -85,7 +85,7 @@ class Stream {
      */
     public function addToOutQueue($seq, Packet $packet) {
         if (count($this->out_queue) > self::MAX_BACKLOG) {
-            throw new \DomainException("Too many packets in stream ".$this->getId()." backlog");
+            throw new \DomainException("Too many packets in channel ".$this->getId()." backlog");
         }
 
         if (isset($this->out_queue[$seq])) {
@@ -169,7 +169,7 @@ class Stream {
 
 
     /**
-     * @return StreamProcessor
+     * @return ChannelProcessor
      */
     public function getProcessor() {
         return $this->processor;
@@ -177,12 +177,12 @@ class Stream {
 
 
     /**
-     * Processes a packet that is part of a stream.
+     * Processes a packet that is part of a channel.
      */
     public function process(Packet $packet) {
         $this->last_activity_ts = time();
 
-        print "Processing packet on stream ".$this->getId()."\n";
+        print "Processing packet on channel ".$this->getId()."\n";
         $header = $packet->getHeader();
 
         // remote tells us that we are missing packets. Resend them again by placing them onto the tx-queue
@@ -192,7 +192,7 @@ class Stream {
                 // Fetch packet from out_queue
                 $packet = $this->getPacketFromOutQueue($missed_seq);
                 if (! $packet) {
-                    throw new \DomainException("Cannot locate seq ".$missed_seq." in the out_queue of stream ".$this->getId()."\n");
+                    throw new \DomainException("Cannot locate seq ".$missed_seq." in the out_queue of channel ".$this->getId()."\n");
                 }
                 // Add this packet to the out_queue (again)
                 $this->addToOutQueue($missed_seq, $packet);
@@ -210,10 +210,10 @@ class Stream {
         print "Actual getProcessor()->processIncoming() by ".get_class($this->getProcessor())."!\n";
         $this->getProcessor()->processIncoming($packet);
 
-        // We can end the stream, and delete it and stuff
+        // We can end the channel, and delete it and stuff
         if (isset($header['end']) && $header['end']) {
             $this->end = true;
-            $this->getTo()->removeStream($this);
+            $this->getTo()->removeChannel($this);
         }
     }
 
@@ -235,7 +235,7 @@ class Stream {
      * @param bool $end
      * @return array
      */
-    public function createOutStreamHeader($type, $extra_headers, $end = true) {
+    public function createOutChannelHeader($type, $extra_headers, $end = true) {
         $this->last_activity_ts = time();
 
         $header = array(
@@ -266,7 +266,7 @@ class Stream {
 
 
     /**
-     * Starts a stream by generating an initial request
+     * Starts a channel by generating an initial request
      * @param array $args
      */
     public function start(array $args) {

@@ -7,7 +7,7 @@ use SwitchBox\DHT\KeyPair;
 use SwitchBox\SwitchBox;
 use SwitchBox\Utils;
 use SwitchBox\Packet;
-use SwitchBox\Packet\Line\Stream;
+use SwitchBox\Packet\Line\Channel;
 
 class Open extends PacketHandler {
 
@@ -130,9 +130,9 @@ class Open extends PacketHandler {
             print_r($node->getInfo());
 
             // Try and do a seek to ourselves, this allows us to find our outside IP/PORT
-            $stream = new Stream($this->getSwitchBox(), $node);
-            $stream->addProcessor("seek", new Line\Processor\Seek($stream));
-            $stream->start(array(
+            $channel = new Channel($this->getSwitchBox(), $node);
+            $channel->addProcessor("seek", new Line\Processor\Seek($channel));
+            $channel->start(array(
                 'hash' => $this->getSwitchBox()->getSelfNode()->getName(),
             ));
         } else {

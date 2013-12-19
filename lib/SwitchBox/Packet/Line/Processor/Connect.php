@@ -7,7 +7,7 @@ use SwitchBox\Packet;
 use SwitchBox\Packet\Open;
 use SwitchBox\DHT\KeyPair;
 
-class Connect extends StreamProcessor {
+class Connect extends ChannelProcessor {
 
 
     public function processIncoming(Packet $packet)
@@ -48,7 +48,7 @@ class Connect extends StreamProcessor {
 //
 //    static public function inResponse(SwitchBox $switchbox, Node $node, Packet $packet)
 //    {
-//        // We've sent out a request onto a stream, and we get a response back
+//        // We've sent out a request onto a channel, and we get a response back
 //        print "inResponse Connect\n";
 //    }
 //
@@ -89,7 +89,7 @@ class Connect extends StreamProcessor {
     public function generate(array $args)
     {
         print "*** generate CONNECT\n";
-        $header = $this->getStream()->createOutStreamHeader('connect', array('ip' => $args['ip'], 'port' => $args['port']), true);
+        $header = $this->getChannel()->createOutChannelHeader('connect', array('ip' => $args['ip'], 'port' => $args['port']), true);
         print_r($header);
         print_r($args);
         return new Packet($header, KeyPair::convertPemToDer($args['pub_key']));

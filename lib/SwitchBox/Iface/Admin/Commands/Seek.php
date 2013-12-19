@@ -3,7 +3,7 @@
 namespace SwitchBox\Iface\Admin\Commands;
 
 use SwitchBox\Iface\SockHandler;
-use SwitchBox\Packet\Line\Stream;
+use SwitchBox\Packet\Line\Channel;
 use SwitchBox\SwitchBox;
 use SwitchBox\Packet\Line\Processor\Seek as LineSeek;
 
@@ -40,9 +40,9 @@ class Seek implements iCmd {
     protected function _seek(SwitchBox $switchbox, $hash) {
         // Find the closest connected nodes for the given hash, and ask if they know about $hash
         foreach ($switchbox->getMesh()->getClosestForHash($hash) as $node) {
-            $stream = new Stream($switchbox, $node);
-            $stream->addProcessor("seek", new LineSeek($stream));
-            $stream->start(array(
+            $channel = new Channel($switchbox, $node);
+            $channel->addProcessor("seek", new LineSeek($channel));
+            $channel->start(array(
                 'hash' => $hash,
             ));
         }

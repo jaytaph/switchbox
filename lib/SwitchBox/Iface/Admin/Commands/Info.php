@@ -39,10 +39,10 @@ class Info implements iCmd {
 
         $buf = "\n";
         socket_write($sock, $buf, strlen($buf));
-        $buf = "Avaliable streams:\n";
+        $buf = "Avaliable channels:\n";
         socket_write($sock, $buf, strlen($buf));
-        foreach ($node->getStreams() as $stream) {
-            $buf = "  " . $stream;
+        foreach ($node->getChannels() as $channel) {
+            $buf = "  " . $channel;
             socket_write($sock, $buf, strlen($buf));
         }
 

@@ -4,13 +4,13 @@ namespace SwitchBox\Packet\Line\Processor;
 
 
 use SwitchBox\Packet;
-use SwitchBox\Packet\Line\Stream;
+use SwitchBox\Packet\Line\Channel;
 use SwitchBox\SwitchBox;
 
-abstract class StreamProcessor {
+abstract class ChannelProcessor {
 
-    /** @var Stream */
-    protected $stream;
+    /** @var Channel */
+    protected $channel;
 
 
     abstract public function processIncoming(Packet $packet);
@@ -18,11 +18,11 @@ abstract class StreamProcessor {
 
 
     /**
-     * @param $stream
+     * @param $channel
      */
-    public function __construct(Stream $stream)
+    public function __construct(Channel $channel)
     {
-        $this->stream = $stream;
+        $this->channel = $channel;
     }
 
 
@@ -31,25 +31,25 @@ abstract class StreamProcessor {
      */
     public function getNode()
     {
-        return $this->getStream()->getTo();
+        return $this->getChannel()->getTo();
     }
 
 
     /**
-     * @param mixed $stream
+     * @param mixed $channel
      */
-    public function setStream($stream)
+    public function setChannel($channel)
     {
-        $this->stream = $stream;
+        $this->channel = $channel;
     }
 
 
     /**
      * @return mixed
      */
-    public function getStream()
+    public function getChannel()
     {
-        return $this->stream;
+        return $this->channel;
     }
 
 
@@ -58,7 +58,7 @@ abstract class StreamProcessor {
      */
     public function getSwitchbox()
     {
-        return $this->getStream()->getSwitchBox();
+        return $this->getChannel()->getSwitchBox();
     }
 
 }
